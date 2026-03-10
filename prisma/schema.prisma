@@ -41,6 +41,14 @@ model House {
   apartmentDetails    ApartmentDetails?
   defectiveBlocks     DefectiveBlocksAssessment?
   pprComparable       PPRComparable?
+  biddingStrategy     BiddingStrategy?
+  commLogs            CommLog[]
+  surveyFindings      SurveyFinding[]
+  fallThroughs        FallThroughRecord[]
+  snagItems           SnagItem[]
+  sellerIntel         SellerIntel?
+  newBuildCompliance  NewBuildCompliance?
+  journalEntries      JournalEntry[]
 }
 
 model Media {
@@ -276,4 +284,111 @@ model PPRComparable {
   askingVsSoldDelta Float?
   lastUpdated       DateTime @default(now())
   house             House    @relation(fields: [houseId], references: [id], onDelete: Cascade)
+}
+
+// ─── Persona audit features (modules 17-30) ───
+
+model BiddingStrategy {
+  id                  String @id @default(uuid())
+  houseId             String @unique
+  hardCeiling         Float
+  coolingOffMinutes   Int    @default(30)
+  warningThresholdPct Float  @default(90)
+  pprMedianAtBidTime  Float?
+  house               House  @relation(fields: [houseId], references: [id], onDelete: Cascade)
+}
+
+model CommLog {
+  id             String    @id @default(uuid())
+  houseId        String?
+  professional   String
+  contactName    String
+  direction      String
+  method         String
+  summary        String
+  responseNeeded Boolean   @default(false)
+  respondedAt    DateTime?
+  createdAt      DateTime  @default(now())
+  house          House?    @relation(fields: [houseId], references: [id], onDelete: SetNull)
+}
+
+model SurveyFinding {
+  id                String  @id @default(uuid())
+  houseId           String
+  category          String
+  location          String
+  description       String
+  estimatedCostLow  Float?
+  estimatedCostHigh Float?
+  photoPath         String?
+  action            String  @default("accept")
+  house             House   @relation(fields: [houseId], references: [id], onDelete: Cascade)
+}
+
+model FallThroughRecord {
+  id            String   @id @default(uuid())
+  houseId       String
+  reason        String
+  notes         String?
+  costsIncurred Float?
+  occurredAt    DateTime @default(now())
+  house         House    @relation(fields: [houseId], references: [id], onDelete: Cascade)
+}
+
+model ContractReadiness {
+  id                String   @id @default(uuid())
+  idVerified        Boolean  @default(false)
+  amlDocsSubmitted  Boolean  @default(false)
+  surveyorOnStandby Boolean  @default(false)
+  brokerEngaged     Boolean  @default(false)
+  updatedAt         DateTime @updatedAt
+}
+
+model SnagItem {
+  id          String @id @default(uuid())
+  houseId     String
+  room        String
+  category    String
+  description String
+  photoPath   String?
+  status      String @default("identified")
+  priority    String @default("medium")
+  house       House  @relation(fields: [houseId], references: [id], onDelete: Cascade)
+}
+
+model SellerIntel {
+  id                  String  @id @default(uuid())
+  houseId             String  @unique
+  inChain             Boolean?
+  chainLength         Int?
+  isProbate           Boolean?
+  solicitorAppointed  Boolean?
+  motivationLevel     String?
+  timelineExpectation String?
+  reasonForSelling    String?
+  notes               String?
+  house               House   @relation(fields: [houseId], references: [id], onDelete: Cascade)
+}
+
+model NewBuildCompliance {
+  id                     String    @id @default(uuid())
+  houseId                String    @unique
+  warrantyProvider       String?
+  warrantyRegistrationNo String?
+  warrantyExpiry         DateTime?
+  bcarCommencementNotice Boolean   @default(false)
+  assignedCertifier      String?
+  certOfCompliance       Boolean   @default(false)
+  certOfComplianceDate   DateTime?
+  house                  House     @relation(fields: [houseId], references: [id], onDelete: Cascade)
+}
+
+model JournalEntry {
+  id        String   @id @default(uuid())
+  houseId   String?
+  type      String
+  gutRating Int?
+  content   String
+  createdAt DateTime @default(now())
+  house     House?   @relation(fields: [houseId], references: [id], onDelete: SetNull)
 }

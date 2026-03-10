@@ -19,6 +19,11 @@ export async function GET(_req: NextRequest, ctx: Ctx) {
       conveyancing: { include: { milestones: { orderBy: { stepOrder: "asc" } } } },
       apartmentDetails: true,
       defectiveBlocks: true,
+      biddingStrategy: true,
+      sellerIntel: true,
+      newBuildCompliance: true,
+      surveyFindings: true,
+      snagItems: { orderBy: { room: "asc" } },
     },
   });
   if (!house) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -58,6 +63,33 @@ export async function PUT(req: NextRequest, ctx: Ctx) {
       ]) {
         await prisma.actionItem.create({ data: { ...a, houseId: id, status: "todo" } });
       }
+      // Auto-create new build compliance + snagging if new build
+      if (house?.isNewBuild) {
+        await prisma.newBuildCompliance.upsert({ where: { houseId: id }, update: {}, create: { houseId: id } });
+        const { DEFAULT_SNAG_ITEMS } = await import("@/lib/default-snags");
+        const snags = DEFAULT_SNAG_ITEMS.flatMap(g => g.items.map(desc => ({ houseId: id, room: g.room, category: "functional" as const, description: desc })));
+        await prisma.snagItem.createMany({ data: snags });
+      }
+    }
+  }
+
+  // Auto-create post-completion checklist when closed
+  if (body.status === "closed") {
+    const { POST_COMPLETION_ITEMS } = await import("@/lib/default-post-completion");
+    const existing = await prisma.viewingChecklist.findFirst({ where: { houseId: id, items: { contains: "MPRN" } } });
+    if (!existing) {
+      await prisma.viewingChecklist.create({
+        data: { houseId: id, items: JSON.stringify(POST_COMPLETION_ITEMS.map(name => ({ name, checked: false, notes: "" }))) },
+      });
+    }
+    await prisma.journalEntry.create({ data: { houseId: id, type: "milestone", content: "🏠 Congratulations! You got the keys!" } });
+  }
+
+  // Record fall-through when dropping from sale_agreed+
+  if (body.status === "dropped") {
+    const current = await prisma.house.findUnique({ where: { id } });
+    if (current && ["sale_agreed", "conveyancing", "closing"].includes(current.status)) {
+      await prisma.journalEntry.create({ data: { houseId: id, type: "milestone", content: "💔 Sale fell through. It's okay — the average Dublin buyer bids on 6 properties." } });
     }
   }
 

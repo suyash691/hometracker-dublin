@@ -19,9 +19,22 @@ export interface ScrapedListing {
 
 export async function scrapeDaftListing(url: string): Promise<ScrapedListing> {
   const res = await fetch(url, {
-    headers: { "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36" },
+    headers: {
+      "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+      "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+      "Accept-Language": "en-IE,en;q=0.9",
+      "Accept-Encoding": "gzip, deflate, br",
+      "Referer": "https://www.daft.ie/",
+      "DNT": "1",
+      "Connection": "keep-alive",
+      "Upgrade-Insecure-Requests": "1",
+      "Sec-Fetch-Dest": "document",
+      "Sec-Fetch-Mode": "navigate",
+      "Sec-Fetch-Site": "same-origin",
+      "Cache-Control": "max-age=0",
+    },
   });
-  if (!res.ok) throw new Error(`Failed to fetch listing: ${res.status}`);
+  if (!res.ok) throw new Error(`Failed to fetch listing (${res.status}). ${res.status === 403 ? "Daft.ie may be blocking automated requests. Try again in a few minutes." : "Check the URL is correct."}`);
   const html = await res.text();
   const $ = cheerio.load(html);
 

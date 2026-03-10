@@ -54,6 +54,7 @@ A self-hosted web app for a couple buying a house in Dublin. Track viewings, bid
 | Agent Transparency | [→ docs/spec/28-agent-tools.md](docs/spec/28-agent-tools.md) | 📋 Specified |
 | Planning Permission | [→ docs/spec/29-planning.md](docs/spec/29-planning.md) | 📋 Specified |
 | Emotional Support | [→ docs/spec/30-emotional.md](docs/spec/30-emotional.md) | 📋 Specified |
+| Neighbourhood Intelligence | [→ docs/spec/31-neighbourhood.md](docs/spec/31-neighbourhood.md) | 📋 Specified |
 
 ## Tech Stack
 

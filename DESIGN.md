@@ -14,6 +14,7 @@
 | [→ docs/design/06-pages.md](docs/design/06-pages.md) | Page wireframes and layouts for all pages |
 | [→ docs/design/07-data-flows.md](docs/design/07-data-flows.md) | Integration flows, cron jobs, automation triggers |
 | [→ docs/design/08-deployment.md](docs/design/08-deployment.md) | Docker, backup, first-run setup, env vars |
+| [→ docs/design/09-neighbourhood.md](docs/design/09-neighbourhood.md) | Geo provider abstraction (OSM/Google), amenity search, commute, walkability |
 
 ## Design Principles
 

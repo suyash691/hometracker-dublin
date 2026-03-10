@@ -1,181 +1,170 @@
+// Daft.ie scraper — uses internal API to bypass Cloudflare
 import * as cheerio from "cheerio";
 import * as fs from "fs";
 import * as path from "path";
 import { randomUUID } from "crypto";
 
 export interface ScrapedListing {
-  address: string;
-  askingPrice?: number;
-  bedrooms?: number;
-  bathrooms?: number;
-  propertyType?: string;
-  ber?: string;
-  squareMetres?: number;
-  neighbourhood?: string;
-  eircode?: string;
-  listingUrl: string;
-  images: string[]; // local file paths after download
+  address: string; askingPrice?: number; bedrooms?: number; bathrooms?: number;
+  propertyType?: string; ber?: string; squareMetres?: number; neighbourhood?: string;
+  eircode?: string; listingUrl: string; images: string[];
+}
+
+// Extract listing ID from Daft URL: /for-sale/.../6515784 → 6515784
+function extractListingId(url: string): string | null {
+  const match = url.match(/\/(\d{5,})$/);
+  return match ? match[1] : null;
 }
 
 export async function scrapeDaftListing(url: string): Promise<ScrapedListing> {
+  const listingId = extractListingId(url);
+
+  // Try Daft's internal API first (bypasses Cloudflare)
+  if (listingId) {
+    try {
+      console.log(`[scraper] Trying Daft API for listing ${listingId}`);
+      return await fetchViaApi(listingId, url);
+    } catch (err) {
+      console.log(`[scraper] API failed: ${err instanceof Error ? err.message : err}, falling back to HTML scrape`);
+    }
+  }
+
+  // Fallback: direct HTML fetch (may hit Cloudflare)
+  return await fetchViaHtml(url);
+}
+
+async function fetchViaApi(listingId: string, originalUrl: string): Promise<ScrapedListing> {
+  // Daft.ie search API — POST to get listing data by ID
+  const res = await fetch("https://gateway.daft.ie/old/v1/listings/" + listingId, {
+    headers: {
+      "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+      "Accept": "application/json",
+      "brand": "daft",
+      "platform": "web",
+    },
+  });
+
+  if (!res.ok) throw new Error(`Daft API returned ${res.status}`);
+  const data = await res.json();
+  const listing = data.listing || data;
+
+  const address = listing.title || listing.displayAddress || "";
+  const price = listing.price ? parseInt(String(listing.price).replace(/[^0-9]/g, ""), 10) : undefined;
+  const beds = listing.numBedrooms || listing.bedrooms;
+  const baths = listing.numBathrooms || listing.bathrooms;
+  const ber = listing.ber?.rating;
+  const sqm = listing.floorArea?.value ? parseFloat(listing.floorArea.value) : undefined;
+  const propertyType = inferPropertyType(listing.propertyType || listing.category || "");
+
+  // Download images
+  const imageUrls = (listing.media?.images || listing.images || [])
+    .map((img: Record<string, unknown>) => (img.url || img.size720x480 || img.original || "") as string)
+    .filter((u: string) => u.startsWith("http"))
+    .slice(0, 10);
+  const images = await downloadImages(imageUrls);
+
+  return {
+    address: address.replace(/,?\s*Dublin\s*\d*,?\s*Ireland/i, "").trim(),
+    askingPrice: price && price > 0 ? price : undefined,
+    bedrooms: beds ? Number(beds) : undefined,
+    bathrooms: baths ? Number(baths) : undefined,
+    propertyType, ber, squareMetres: sqm,
+    neighbourhood: inferNeighbourhood(address),
+    eircode: address.match(/([A-Z]\d{2}\s?[A-Z0-9]{4})/i)?.[1],
+    listingUrl: originalUrl, images,
+  };
+}
+
+async function fetchViaHtml(url: string): Promise<ScrapedListing> {
+  console.log(`[scraper] Fetching HTML: ${url}`);
   const res = await fetch(url, {
     headers: {
       "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
       "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
       "Accept-Language": "en-IE,en;q=0.9",
-      "Accept-Encoding": "gzip, deflate, br",
       "Referer": "https://www.daft.ie/",
-      "DNT": "1",
-      "Connection": "keep-alive",
-      "Upgrade-Insecure-Requests": "1",
-      "Sec-Fetch-Dest": "document",
-      "Sec-Fetch-Mode": "navigate",
-      "Sec-Fetch-Site": "same-origin",
-      "Cache-Control": "max-age=0",
+      "Sec-Fetch-Dest": "document", "Sec-Fetch-Mode": "navigate", "Sec-Fetch-Site": "same-origin",
     },
   });
-  console.log(`[scraper] Fetching: ${url}`);
-  console.log(`[scraper] Response status: ${res.status}, headers: ${JSON.stringify(Object.fromEntries(res.headers.entries()))}`);
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    console.log(`[scraper] Error body (first 500 chars): ${body.substring(0, 500)}`);
-    throw new Error(`Failed to fetch listing (${res.status}). ${res.status === 403 ? "Daft.ie is blocking automated requests. Use manual entry instead." : "Check the URL is correct."}`);
-  }
+  console.log(`[scraper] Response: ${res.status}`);
+  if (!res.ok) throw new Error(`Failed to fetch listing (${res.status}). ${res.status === 403 ? "Daft.ie is blocking automated requests — try adding the house manually." : "Check the URL."}`);
+
   const html = await res.text();
   const $ = cheerio.load(html);
 
-  // Extract address from title or heading
-  const address =
-    $('h1[data-testid="address"]').text().trim() ||
-    $("h1").first().text().trim() ||
-    $('meta[property="og:title"]').attr("content")?.trim() ||
-    "";
+  // Try __NEXT_DATA__ JSON first (Daft is a Next.js app)
+  const nextData = $('script#__NEXT_DATA__').text();
+  if (nextData) {
+    try {
+      const json = JSON.parse(nextData);
+      const listing = json.props?.pageProps?.listing;
+      if (listing) {
+        return {
+          address: listing.title || $("h1").first().text().trim(),
+          askingPrice: listing.price ? parseInt(String(listing.price).replace(/[^0-9]/g, ""), 10) : undefined,
+          bedrooms: listing.numBedrooms, bathrooms: listing.numBathrooms,
+          ber: listing.ber?.rating, propertyType: inferPropertyType(listing.propertyType || ""),
+          squareMetres: listing.floorArea?.value ? parseFloat(listing.floorArea.value) : undefined,
+          neighbourhood: inferNeighbourhood(listing.title || ""),
+          eircode: (listing.title || "").match(/([A-Z]\d{2}\s?[A-Z0-9]{4})/i)?.[1],
+          listingUrl: url, images: await downloadImages((listing.media?.images || []).map((i: Record<string, string>) => i.url || i.size720x480 || "").filter(Boolean).slice(0, 10)),
+        };
+      }
+    } catch { /* fall through to HTML parsing */ }
+  }
 
-  // Extract price
-  const priceText =
-    $('[data-testid="price"]').text() ||
-    $(".TitleBlock__Price").text() ||
-    $('span:contains("€")').first().text();
-  const askingPrice = parsePrice(priceText);
-
-  // Extract beds/baths
-  const bedsText = $('[data-testid="beds"]').text() || $('p:contains("Bed")').first().text();
-  const bathsText = $('[data-testid="baths"]').text() || $('p:contains("Bath")').first().text();
-  const bedrooms = extractNumber(bedsText);
-  const bathrooms = extractNumber(bathsText);
-
-  // Extract BER
-  const berEl = $('[data-testid="ber"]').text() || $('img[alt*="BER"]').attr("alt") || "";
-  const berMatch = berEl.match(/([A-G][1-3]?)/i);
-  const ber = berMatch ? berMatch[1].toUpperCase() : undefined;
-
-  // Extract property type
-  const typeText = $('[data-testid="property-type"]').text() || $('p:contains("Property Type")').next().text();
-  const propertyType = inferPropertyType(typeText);
-
-  // Extract square metres
-  const sizeText = $('[data-testid="floor-area"]').text() || $('p:contains("m²")').first().text();
-  const sqmMatch = sizeText.match(/([\d.]+)\s*m/);
-  const squareMetres = sqmMatch ? parseFloat(sqmMatch[1]) : undefined;
-
-  // Extract eircode from address
-  const eircodeMatch = address.match(/([A-Z]\d{2}\s?[A-Z0-9]{4})/i);
-  const eircode = eircodeMatch ? eircodeMatch[1] : undefined;
-
-  // Infer neighbourhood from address
-  const neighbourhood = inferNeighbourhood(address);
-
-  // Download images
-  const imageUrls: string[] = [];
-  $('img[data-testid="image"], img[src*="daft"], picture img, [data-testid="gallery"] img').each((_, el) => {
-    const src = $(el).attr("src") || $(el).attr("data-src");
-    if (src && src.startsWith("http") && !src.includes("logo") && !src.includes("icon")) {
-      imageUrls.push(src);
-    }
-  });
-  // Also check og:image
-  const ogImage = $('meta[property="og:image"]').attr("content");
-  if (ogImage && !imageUrls.includes(ogImage)) imageUrls.unshift(ogImage);
-
-  const images = await downloadImages(imageUrls.slice(0, 20)); // cap at 20
-
+  // Fallback: parse HTML directly
+  const address = $('h1[data-testid="address"]').text().trim() || $("h1").first().text().trim() || "";
+  const priceText = $('[data-testid="price"]').text() || $('span:contains("€")').first().text();
   return {
     address: address.replace(/,?\s*Dublin\s*\d*,?\s*Ireland/i, "").trim(),
-    askingPrice,
-    bedrooms,
-    bathrooms,
-    propertyType,
-    ber,
-    squareMetres,
-    neighbourhood,
-    eircode,
-    listingUrl: url,
-    images,
+    askingPrice: parsePrice(priceText),
+    bedrooms: extractNumber($('[data-testid="beds"]').text() || $('p:contains("Bed")').first().text()),
+    bathrooms: extractNumber($('[data-testid="baths"]').text() || $('p:contains("Bath")').first().text()),
+    ber: ($('[data-testid="ber"]').text() || $('img[alt*="BER"]').attr("alt") || "").match(/([A-G][1-3]?)/i)?.[1]?.toUpperCase(),
+    propertyType: inferPropertyType($('[data-testid="property-type"]').text()),
+    squareMetres: (() => { const m = ($('[data-testid="floor-area"]').text() || "").match(/([\d.]+)\s*m/); return m ? parseFloat(m[1]) : undefined; })(),
+    neighbourhood: inferNeighbourhood(address),
+    eircode: address.match(/([A-Z]\d{2}\s?[A-Z0-9]{4})/i)?.[1],
+    listingUrl: url, images: [],
   };
 }
 
-function parsePrice(text: string): number | undefined {
-  const cleaned = text.replace(/[^0-9]/g, "");
-  const num = parseInt(cleaned, 10);
-  return num > 0 ? num : undefined;
-}
+function parsePrice(t: string) { const n = parseInt(t.replace(/[^0-9]/g, ""), 10); return n > 0 ? n : undefined; }
+function extractNumber(t: string) { const m = t.match(/(\d+)/); return m ? parseInt(m[1], 10) : undefined; }
 
-function extractNumber(text: string): number | undefined {
-  const match = text.match(/(\d+)/);
-  return match ? parseInt(match[1], 10) : undefined;
-}
-
-function inferPropertyType(text: string): string | undefined {
-  const lower = text.toLowerCase();
-  if (lower.includes("semi")) return "semi_detached";
-  if (lower.includes("detach")) return "detached";
-  if (lower.includes("terrace") || lower.includes("end of terrace")) return "terraced";
-  if (lower.includes("apartment") || lower.includes("flat")) return "apartment";
-  if (lower.includes("duplex")) return "duplex";
-  if (lower.includes("bungalow")) return "bungalow";
-  if (lower.includes("house")) return "house";
+function inferPropertyType(t: string) {
+  const l = t.toLowerCase();
+  if (l.includes("semi")) return "semi_detached";
+  if (l.includes("detach")) return "detached";
+  if (l.includes("terrace")) return "terraced";
+  if (l.includes("apartment") || l.includes("flat")) return "apartment";
+  if (l.includes("duplex")) return "duplex";
+  if (l.includes("bungalow")) return "bungalow";
+  if (l.includes("house")) return "house";
   return undefined;
 }
 
-function inferNeighbourhood(address: string): string | undefined {
-  // Common Dublin neighbourhoods
-  const areas = [
-    "Phibsborough", "Drumcondra", "Glasnevin", "Rathmines", "Ranelagh",
-    "Portobello", "Ringsend", "Sandymount", "Clontarf", "Raheny",
-    "Killester", "Artane", "Beaumont", "Santry", "Finglas",
-    "Cabra", "Stoneybatter", "Smithfield", "Inchicore", "Kilmainham",
-    "Crumlin", "Drimnagh", "Walkinstown", "Terenure", "Rathgar",
-    "Harold's Cross", "Donnybrook", "Ballsbridge", "Blackrock", "Dun Laoghaire",
-    "Dalkey", "Killiney", "Stillorgan", "Dundrum", "Churchtown",
-    "Lucan", "Clondalkin", "Tallaght", "Swords", "Malahide",
-    "Howth", "Sutton", "Baldoyle", "Bayside", "Castleknock",
-    "Blanchardstown", "Chapelizod", "Palmerstown", "Ballyfermot",
-    "Marino", "Fairview", "East Wall", "North Strand",
-  ];
-  for (const area of areas) {
-    if (address.toLowerCase().includes(area.toLowerCase())) return area;
-  }
+function inferNeighbourhood(address: string) {
+  const areas = ["Phibsborough","Drumcondra","Glasnevin","Rathmines","Ranelagh","Portobello","Ringsend","Sandymount","Clontarf","Raheny","Killester","Artane","Beaumont","Santry","Finglas","Cabra","Stoneybatter","Smithfield","Inchicore","Kilmainham","Crumlin","Drimnagh","Walkinstown","Terenure","Rathgar","Harold's Cross","Donnybrook","Ballsbridge","Blackrock","Dun Laoghaire","Dalkey","Killiney","Stillorgan","Dundrum","Churchtown","Lucan","Clondalkin","Tallaght","Swords","Malahide","Howth","Sutton","Baldoyle","Bayside","Castleknock","Blanchardstown","Chapelizod","Palmerstown","Ballyfermot","Marino","Fairview","East Wall","North Strand"];
+  for (const a of areas) if (address.toLowerCase().includes(a.toLowerCase())) return a;
   return undefined;
 }
 
 async function downloadImages(urls: string[]): Promise<string[]> {
-  const mediaDir = path.join(process.cwd(), "data", "media");
-  if (!fs.existsSync(mediaDir)) fs.mkdirSync(mediaDir, { recursive: true });
-
+  const dir = path.join(process.cwd(), "data", "media");
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
   const paths: string[] = [];
   for (const url of urls) {
     try {
       const res = await fetch(url);
       if (!res.ok) continue;
-      const buffer = Buffer.from(await res.arrayBuffer());
+      const buf = Buffer.from(await res.arrayBuffer());
       const ext = url.match(/\.(jpg|jpeg|png|webp)/i)?.[1] || "jpg";
-      const filename = `${randomUUID()}.${ext}`;
-      const filePath = path.join(mediaDir, filename);
-      fs.writeFileSync(filePath, buffer);
-      paths.push(filePath);
-    } catch {
-      // skip failed downloads
-    }
+      const fp = path.join(dir, `${randomUUID()}.${ext}`);
+      fs.writeFileSync(fp, buf);
+      paths.push(fp);
+    } catch { /* skip */ }
   }
   return paths;
 }

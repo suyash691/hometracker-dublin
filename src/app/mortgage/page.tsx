@@ -86,7 +86,7 @@ export default function MortgagePage() {
                   {MORTGAGE_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g, " ")}</option>)}
                 </select>
               </div>
-              <div className="grid grid-cols-3 gap-3 text-sm mb-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-sm mb-3">
                 {m.interestRate != null && <div><span className="text-gray-500">Rate:</span> {m.interestRate}%</div>}
                 {m.term != null && <div><span className="text-gray-500">Term:</span> {m.term} years</div>}
                 {m.fixedPeriod != null && <div><span className="text-gray-500">Fixed:</span> {m.fixedPeriod} years</div>}

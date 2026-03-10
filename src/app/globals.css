@@ -1,1 +1,21 @@
 @import "tailwindcss";
+
+/* Ensure minimum touch target size for interactive elements (WCAG 2.5.8) */
+input[type="checkbox"] {
+  min-width: 20px;
+  min-height: 20px;
+}
+
+select {
+  min-height: 44px;
+}
+
+/* Ensure buttons have minimum touch target */
+button, a {
+  min-height: 44px;
+}
+
+/* Exception for inline small buttons */
+button.text-xs, button.text-sm {
+  min-height: auto;
+}

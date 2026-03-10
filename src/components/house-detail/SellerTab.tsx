@@ -8,7 +8,7 @@ export default function SellerTab({ houseId, intel, reload }: { houseId: string;
     <div className="bg-white rounded-lg border p-4 space-y-3">
       <h3 className="font-semibold">Seller Intelligence</h3>
       <p className="text-sm text-gray-500">Ask the agent these questions before committing:</p>
-      <div className="grid grid-cols-2 gap-3 text-sm">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
         <label className="flex items-center gap-2"><input type="checkbox" checked={form.inChain} onChange={e => setForm({ ...form, inChain: e.target.checked })} /> Seller is in a chain</label>
         <label className="flex items-center gap-2"><input type="checkbox" checked={form.isProbate} onChange={e => setForm({ ...form, isProbate: e.target.checked })} /> Probate sale</label>
         <label className="flex items-center gap-2"><input type="checkbox" checked={form.solicitorAppointed} onChange={e => setForm({ ...form, solicitorAppointed: e.target.checked })} /> Seller&apos;s solicitor appointed</label>

@@ -47,7 +47,7 @@ export default function ActionsPage() {
 
       {showForm && (
         <form onSubmit={submit} className="bg-white p-4 rounded-lg border space-y-3">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <input required placeholder="Title *" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="border rounded px-3 py-2 text-sm" />
             <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="border rounded px-3 py-2 text-sm">
               {ACTION_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}

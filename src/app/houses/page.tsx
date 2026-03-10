@@ -41,7 +41,7 @@ export default function HousesPage() {
 
       {showForm && (
         <form onSubmit={submit} className="bg-white p-4 rounded-lg border space-y-3">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <input required placeholder="Address *" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} className="border rounded px-3 py-2 text-sm" />
             <input placeholder="Asking Price (€)" type="number" value={form.askingPrice} onChange={(e) => setForm({ ...form, askingPrice: e.target.value })} className="border rounded px-3 py-2 text-sm" />
             <input placeholder="Bedrooms" type="number" value={form.bedrooms} onChange={(e) => setForm({ ...form, bedrooms: e.target.value })} className="border rounded px-3 py-2 text-sm" />

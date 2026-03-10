@@ -37,7 +37,7 @@ export default function ProfilePage() {
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Buyer Profile</h1>
       <form onSubmit={save} className="bg-white p-6 rounded-lg border space-y-4">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <label className="block"><span className="text-sm text-gray-500">Partner 1 Name</span><input required value={form.name1} onChange={e => setForm({ ...form, name1: e.target.value })} className="w-full border rounded px-3 py-2 text-sm mt-1" /></label>
           <label className="block"><span className="text-sm text-gray-500">Partner 2 Name</span><input required value={form.name2} onChange={e => setForm({ ...form, name2: e.target.value })} className="w-full border rounded px-3 py-2 text-sm mt-1" /></label>
           <label className="block"><span className="text-sm text-gray-500">Gross Income 1 (€)</span><input type="number" value={form.grossIncome1} onChange={e => setForm({ ...form, grossIncome1: e.target.value })} className="w-full border rounded px-3 py-2 text-sm mt-1" /></label>

@@ -171,7 +171,8 @@ model BuyerProfile {
   totalSavings        Float    @default(0)
   taxPaid4Years1      Float    @default(0)
   taxPaid4Years2      Float    @default(0)
-  workplaceAddress    String?
+  workplaceAddress1   String?
+  workplaceAddress2   String?
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 }

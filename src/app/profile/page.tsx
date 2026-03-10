@@ -3,13 +3,13 @@ import { useEffect, useState } from "react";
 import { api, type BuyerProfile, type BorrowingLimits } from "@/lib/api";
 
 export default function ProfilePage() {
-  const [form, setForm] = useState({ name1: "", name2: "", isFirstTimeBuyer: true, grossIncome1: "", grossIncome2: "", existingMonthlyDebt: "", totalSavings: "", taxPaid4Years1: "", taxPaid4Years2: "", workplaceAddress: "" });
+  const [form, setForm] = useState({ name1: "", name2: "", isFirstTimeBuyer: true, grossIncome1: "", grossIncome2: "", existingMonthlyDebt: "", totalSavings: "", taxPaid4Years1: "", taxPaid4Years2: "", workplaceAddress1: "", workplaceAddress2: "" });
   const [limits, setLimits] = useState<BorrowingLimits | null>(null);
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     api.profile.get().then((p: BuyerProfile | null) => {
-      if (p) setForm({ name1: p.name1, name2: p.name2, isFirstTimeBuyer: p.isFirstTimeBuyer, grossIncome1: String(p.grossIncome1 || ""), grossIncome2: String(p.grossIncome2 || ""), existingMonthlyDebt: String(p.existingMonthlyDebt || ""), totalSavings: String(p.totalSavings || ""), taxPaid4Years1: String(p.taxPaid4Years1 || ""), taxPaid4Years2: String(p.taxPaid4Years2 || ""), workplaceAddress: p.workplaceAddress || "" });
+      if (p) setForm({ name1: p.name1, name2: p.name2, isFirstTimeBuyer: p.isFirstTimeBuyer, grossIncome1: String(p.grossIncome1 || ""), grossIncome2: String(p.grossIncome2 || ""), existingMonthlyDebt: String(p.existingMonthlyDebt || ""), totalSavings: String(p.totalSavings || ""), taxPaid4Years1: String(p.taxPaid4Years1 || ""), taxPaid4Years2: String(p.taxPaid4Years2 || ""), workplaceAddress1: p.workplaceAddress1 || "", workplaceAddress2: p.workplaceAddress2 || "" });
     });
   }, []);
 
@@ -25,7 +25,7 @@ export default function ProfilePage() {
       grossIncome1: Number(form.grossIncome1) || 0, grossIncome2: Number(form.grossIncome2) || 0,
       existingMonthlyDebt: Number(form.existingMonthlyDebt) || 0, totalSavings: Number(form.totalSavings) || 0,
       taxPaid4Years1: Number(form.taxPaid4Years1) || 0, taxPaid4Years2: Number(form.taxPaid4Years2) || 0,
-      workplaceAddress: form.workplaceAddress || undefined,
+      workplaceAddress1: form.workplaceAddress1 || undefined, workplaceAddress2: form.workplaceAddress2 || undefined,
     });
     setSaved(true); setTimeout(() => setSaved(false), 2000);
   };
@@ -46,7 +46,8 @@ export default function ProfilePage() {
           <label className="block"><span className="text-sm text-gray-500">Tax Paid 4yr — Partner 2 (€)</span><input type="number" value={form.taxPaid4Years2} onChange={e => setForm({ ...form, taxPaid4Years2: e.target.value })} className="w-full border rounded px-3 py-2 text-sm mt-1" /></label>
           <label className="block"><span className="text-sm text-gray-500">Existing Monthly Debt (€)</span><input type="number" value={form.existingMonthlyDebt} onChange={e => setForm({ ...form, existingMonthlyDebt: e.target.value })} className="w-full border rounded px-3 py-2 text-sm mt-1" /></label>
           <label className="block"><span className="text-sm text-gray-500">Total Savings (€)</span><input type="number" value={form.totalSavings} onChange={e => setForm({ ...form, totalSavings: e.target.value })} className="w-full border rounded px-3 py-2 text-sm mt-1" /></label>
-          <label className="col-span-2 block"><span className="text-sm text-gray-500">Workplace Address</span><input value={form.workplaceAddress} onChange={e => setForm({ ...form, workplaceAddress: e.target.value })} className="w-full border rounded px-3 py-2 text-sm mt-1" placeholder="For commute estimates" /></label>
+          <label className="block"><span className="text-sm text-gray-500">Partner 1 Workplace</span><input value={form.workplaceAddress1} onChange={e => setForm({ ...form, workplaceAddress1: e.target.value })} className="w-full border rounded px-3 py-2 text-sm mt-1" placeholder="e.g. Grand Canal Dock, Dublin 2" /></label>
+          <label className="block"><span className="text-sm text-gray-500">Partner 2 Workplace</span><input value={form.workplaceAddress2} onChange={e => setForm({ ...form, workplaceAddress2: e.target.value })} className="w-full border rounded px-3 py-2 text-sm mt-1" placeholder="e.g. Sandyford Business Park" /></label>
         </div>
         <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.isFirstTimeBuyer} onChange={e => setForm({ ...form, isFirstTimeBuyer: e.target.checked })} /> First-time buyer</label>
         <div className="flex gap-2 items-center">

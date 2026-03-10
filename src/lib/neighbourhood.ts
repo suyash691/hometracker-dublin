@@ -28,16 +28,22 @@ export async function refreshNeighbourhood(houseId: string) {
     if (process.env.GEO_PROVIDER !== "google") await sleep(1100);
   }
 
-  // Refresh commute
+  // Refresh commute for both partners
   const profile = await prisma.buyerProfile.findFirst();
   await prisma.commuteEstimate.deleteMany({ where: { houseId } });
-  if (profile?.workplaceAddress) {
+  const workplaces = [
+    { label: profile?.name1, address: profile?.workplaceAddress1 },
+    { label: profile?.name2, address: profile?.workplaceAddress2 },
+  ].filter(w => w.address);
+
+  for (const wp of workplaces) {
     try {
-      const workLoc = await geo.geocode(profile.workplaceAddress);
+      const workLoc = await geo.geocode(wp.address!);
       const walk = await geo.walkingRoute(houseLoc, workLoc);
       await prisma.commuteEstimate.create({
-        data: { houseId, workplaceLabel: `${profile.name1}'s workplace`, workplaceAddress: profile.workplaceAddress, mode: "walking", distanceMetres: walk.distanceMetres, durationMinutes: walk.durationMinutes },
+        data: { houseId, workplaceLabel: `${wp.label}'s workplace`, workplaceAddress: wp.address!, mode: "walking", distanceMetres: walk.distanceMetres, durationMinutes: walk.durationMinutes },
       });
+      if (process.env.GEO_PROVIDER !== "google") await sleep(1100);
     } catch { /* skip */ }
   }
 

@@ -157,7 +157,7 @@ export interface Estimate { id: string; houseId: string; item: string; estimated
 export interface Checklist { id: string; houseId: string; items: string; createdAt: string; }
 export interface ChecklistTemplate { id: string; name: string; items: string; isDefault: boolean; }
 export interface ActivityLog { id: string; user: string; action: string; entity: string; entityId?: string; detail?: string; createdAt: string; }
-export interface BuyerProfile { id: string; name1: string; name2: string; isFirstTimeBuyer: boolean; grossIncome1: number; grossIncome2: number; existingMonthlyDebt: number; totalSavings: number; taxPaid4Years1: number; taxPaid4Years2: number; workplaceAddress?: string; }
+export interface BuyerProfile { id: string; name1: string; name2: string; isFirstTimeBuyer: boolean; grossIncome1: number; grossIncome2: number; existingMonthlyDebt: number; totalSavings: number; taxPaid4Years1: number; taxPaid4Years2: number; workplaceAddress1?: string; workplaceAddress2?: string; }
 export interface SchemeEligibility { htb: { eligible: boolean; reason: string; maxRefund: number }; fhs: { eligible: boolean; reason: string; maxEquity: number }; lahl: { eligible: boolean; reason: string; maxLoan: number }; }
 export interface SchemeRecord { id: string; scheme: string; eligible: boolean; estimatedAmount?: number; applicationStatus: string; notes?: string; }
 export interface TotalCost { id: string; houseId: string; purchasePrice: number; deposit: number; stampDuty: number; legalFees: number; landRegistryFees: number; surveyFee: number; valuationFee: number; mortgageProtection: number; homeInsurance: number; movingCosts: number; otherCosts: number; totalUpfront?: number; cashNeededAtClosing?: number; }

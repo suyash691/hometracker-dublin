@@ -1,0 +1,48 @@
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=file:/app/data/hometracker.db
+      - OLLAMA_URL=http://ollama:11434
+      # Set AUTH_USERS to enable auth: "name1:pass1,name2:pass2"
+      # - AUTH_USERS=sarah:mypass,john:mypass
+      # Set CRON_SECRET to protect the cron endpoint
+      # - CRON_SECRET=your-secret-here
+      # Set ANTHROPIC_API_KEY if you want Claude fallback for estimates
+      # - ANTHROPIC_API_KEY=sk-ant-...
+      # - ANTHROPIC_MODEL=claude-sonnet-4-20250514
+    volumes:
+      - app-data:/app/data
+    restart: unless-stopped
+    depends_on:
+      - ollama
+
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    restart: unless-stopped
+    # After first start, run: docker exec -it <container> ollama pull llama3
+
+  # Cron container: Offr sync (30min), PPR refresh (daily 2am), reminders (daily 8am)
+  cron:
+    image: alpine:latest
+    depends_on:
+      - app
+    entrypoint: /bin/sh
+    command: >
+      -c "
+      # Install cron
+      echo '*/30 9-18 * * 1-5 wget -q -O- --post-data=\"\" http://app:3000/api/cron/offr-sync 2>/dev/null' > /etc/crontabs/root
+      echo '0 2 * * * wget -q -O- --post-data=\"\" http://app:3000/api/cron/ppr-refresh 2>/dev/null' >> /etc/crontabs/root
+      crond -f -l 8
+      "
+    restart: unless-stopped
+
+volumes:
+  app-data:
+  ollama-data:

@@ -1,0 +1,279 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model House {
+  id            String   @id @default(uuid())
+  address       String
+  eircode       String?
+  neighbourhood String?
+  askingPrice   Float?
+  currentBid    Float?
+  listingUrl    String?
+  offrUrl       String?
+  status        String   @default("wishlist")
+  bedrooms      Int?
+  bathrooms     Int?
+  propertyType  String?
+  ber           String?
+  isNewBuild    Boolean  @default(false)
+  squareMetres  Float?
+  notes         String?
+  pros          String?
+  cons          String?
+  viewingDate   DateTime?
+  addedBy       String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  media               Media[]
+  bids                BidHistory[]
+  actionItems         ActionItem[]
+  renovationEstimates RenovationEstimate[]
+  viewingChecklists   ViewingChecklist[]
+  totalCostEstimate   TotalCostEstimate?
+  conveyancing        ConveyancingTracker?
+  apartmentDetails    ApartmentDetails?
+  defectiveBlocks     DefectiveBlocksAssessment?
+  pprComparable       PPRComparable?
+}
+
+model Media {
+  id        String   @id @default(uuid())
+  houseId   String
+  type      String
+  filePath  String
+  caption   String?
+  takenAt   DateTime?
+  createdAt DateTime @default(now())
+  house     House    @relation(fields: [houseId], references: [id], onDelete: Cascade)
+}
+
+model BidHistory {
+  id      String   @id @default(uuid())
+  houseId String
+  amount  Float
+  bidDate DateTime @default(now())
+  source  String   @default("manual")
+  isOurs  Boolean  @default(true)
+  notes   String?
+  house   House    @relation(fields: [houseId], references: [id], onDelete: Cascade)
+}
+
+model ActionItem {
+  id          String    @id @default(uuid())
+  houseId     String?
+  title       String
+  description String?
+  dueDate     DateTime?
+  assignedTo  String?
+  status      String    @default("todo")
+  category    String    @default("other")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  house       House?    @relation(fields: [houseId], references: [id], onDelete: SetNull)
+}
+
+model MortgageTracker {
+  id               String   @id @default(uuid())
+  lender           String
+  approvalAmount   Float?
+  approvalExpiry   DateTime?
+  interestRate     Float?
+  fixedPeriod      Int?
+  term             Int?
+  monthlyRepayment Float?
+  status           String   @default("researching")
+  notes            String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  documents        MortgageDocument[]
+  exemptions       MortgageExemption[]
+}
+
+model MortgageDocument {
+  id         String  @id @default(uuid())
+  mortgageId String
+  name       String
+  required   Boolean @default(true)
+  uploaded   Boolean @default(false)
+  filePath   String?
+  perPerson  Boolean @default(false)
+  person     String?
+  mortgage   MortgageTracker @relation(fields: [mortgageId], references: [id], onDelete: Cascade)
+}
+
+model RenovationEstimate {
+  id               String   @id @default(uuid())
+  houseId          String
+  item             String
+  estimatedCostLow  Float?
+  estimatedCostHigh Float?
+  source           String   @default("manual")
+  notes            String?
+  generatedAt      DateTime @default(now())
+  house            House    @relation(fields: [houseId], references: [id], onDelete: Cascade)
+}
+
+model ViewingChecklist {
+  id        String   @id @default(uuid())
+  houseId   String
+  items     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  house     House    @relation(fields: [houseId], references: [id], onDelete: Cascade)
+}
+
+model ChecklistTemplate {
+  id        String   @id @default(uuid())
+  name      String
+  items     String
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model ActivityLog {
+  id        String   @id @default(uuid())
+  user      String
+  action    String
+  entity    String
+  entityId  String?
+  detail    String?
+  createdAt DateTime @default(now())
+}
+
+// ─── New entities from spec ───
+
+model BuyerProfile {
+  id                  String   @id @default(uuid())
+  name1               String
+  name2               String
+  isFirstTimeBuyer    Boolean  @default(true)
+  grossIncome1        Float    @default(0)
+  grossIncome2        Float    @default(0)
+  existingMonthlyDebt Float    @default(0)
+  totalSavings        Float    @default(0)
+  taxPaid4Years1      Float    @default(0)
+  taxPaid4Years2      Float    @default(0)
+  workplaceAddress    String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+model SchemeTracker {
+  id                String   @id @default(uuid())
+  scheme            String   @unique // htb, fhs, lahl
+  eligible          Boolean  @default(false)
+  estimatedAmount   Float?
+  applicationStatus String   @default("not_started")
+  referenceId       String?
+  notes             String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model TotalCostEstimate {
+  id                 String @id @default(uuid())
+  houseId            String @unique
+  purchasePrice      Float
+  deposit            Float
+  stampDuty          Float
+  legalFees          Float  @default(2500)
+  landRegistryFees   Float  @default(700)
+  surveyFee          Float  @default(500)
+  valuationFee       Float  @default(185)
+  mortgageProtection Float  @default(0)
+  homeInsurance      Float  @default(0)
+  movingCosts        Float  @default(800)
+  otherCosts         Float  @default(0)
+  house              House  @relation(fields: [houseId], references: [id], onDelete: Cascade)
+}
+
+model ConveyancingTracker {
+  id                   String    @id @default(uuid())
+  houseId              String    @unique
+  solicitorName        String?
+  solicitorFirm        String?
+  solicitorPhone       String?
+  solicitorEmail       String?
+  estimatedClosingDate DateTime?
+  actualClosingDate    DateTime?
+  status               String    @default("in_progress")
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  house                House     @relation(fields: [houseId], references: [id], onDelete: Cascade)
+  milestones           ConveyancingMilestone[]
+}
+
+model ConveyancingMilestone {
+  id             String    @id @default(uuid())
+  conveyancingId String
+  step           String
+  stepOrder      Int
+  status         String    @default("pending")
+  completedDate  DateTime?
+  notes          String?
+  blockerReason  String?
+  conveyancing   ConveyancingTracker @relation(fields: [conveyancingId], references: [id], onDelete: Cascade)
+}
+
+model ApartmentDetails {
+  id                  String    @id @default(uuid())
+  houseId             String    @unique
+  managementCompany   String?
+  annualServiceCharge Float?
+  sinkingFundBalance  Float?
+  sinkingFundAdequacy String?
+  fireSafetyCompliant Boolean   @default(false)
+  fireSafetyCertDate  DateTime?
+  parkingIncluded     Boolean   @default(false)
+  parkingDetails      String?
+  storageIncluded     Boolean   @default(false)
+  commonAreaCondition String?
+  numberOfUnits       Int?
+  yearBuilt           Int?
+  defectsHistory      String?
+  omcChecklist        String?
+  house               House     @relation(fields: [houseId], references: [id], onDelete: Cascade)
+}
+
+model DefectiveBlocksAssessment {
+  id                       String  @id @default(uuid())
+  houseId                  String  @unique
+  buildYear                Int?
+  inRiskPeriod             Boolean @default(false)
+  pyriteTestResult         String  @default("not_tested")
+  is398Certificate         Boolean @default(false)
+  micaRisk                 Boolean @default(false)
+  remediationEligible      Boolean @default(false)
+  structuralEngineerReport Boolean @default(false)
+  notes                    String?
+  house                    House   @relation(fields: [houseId], references: [id], onDelete: Cascade)
+}
+
+model MortgageExemption {
+  id              String          @id @default(uuid())
+  mortgageId      String
+  type            String
+  standardLimit   Float
+  requestedAmount Float
+  excessAmount    Float
+  status          String          @default("not_needed")
+  lenderResponse  String?
+  mortgage        MortgageTracker @relation(fields: [mortgageId], references: [id], onDelete: Cascade)
+}
+
+model PPRComparable {
+  id                String   @id @default(uuid())
+  houseId           String   @unique
+  comparables       String
+  medianPricePerSqm Float?
+  askingVsSoldDelta Float?
+  lastUpdated       DateTime @default(now())
+  house             House    @relation(fields: [houseId], references: [id], onDelete: Cascade)
+}

@@ -15,7 +15,7 @@ A self-hosted web app for a couple buying a house in Dublin. Track viewings, bid
 
 ## Module Index
 
-### Core Modules (existing, implemented)
+### Core Modules
 
 | Module | Spec | Status |
 |--------|------|--------|
@@ -36,27 +36,46 @@ A self-hosted web app for a couple buying a house in Dublin. Track viewings, bid
 | Dashboard & Activity | [→ docs/spec/15-dashboard.md](docs/spec/15-dashboard.md) | ✅ Implemented |
 | Auth & Infrastructure | [→ docs/spec/16-infrastructure.md](docs/spec/16-infrastructure.md) | ✅ Implemented |
 
-### New Modules (from persona audit)
+### Persona Audit Modules
 
 | Module | Spec | Status |
 |--------|------|--------|
-| Bidding Strategy | [→ docs/spec/17-bidding-strategy.md](docs/spec/17-bidding-strategy.md) | 📋 Specified |
-| Professional Comms Tracker | [→ docs/spec/18-comms-tracker.md](docs/spec/18-comms-tracker.md) | 📋 Specified |
-| Survey Report Module | [→ docs/spec/19-survey-report.md](docs/spec/19-survey-report.md) | 📋 Specified |
-| Fall-Through Recovery | [→ docs/spec/20-fall-through.md](docs/spec/20-fall-through.md) | 📋 Specified |
-| Contract Readiness | [→ docs/spec/21-contract-readiness.md](docs/spec/21-contract-readiness.md) | 📋 Specified |
-| Snagging Module | [→ docs/spec/22-snagging.md](docs/spec/22-snagging.md) | 📋 Specified |
-| BER Cost Impact | [→ docs/spec/23-ber-cost.md](docs/spec/23-ber-cost.md) | 📋 Specified |
-| Post-Completion | [→ docs/spec/24-post-completion.md](docs/spec/24-post-completion.md) | 📋 Specified |
-| Drawdown Conditions | [→ docs/spec/25-drawdown.md](docs/spec/25-drawdown.md) | 📋 Specified |
-| Seller Intelligence | [→ docs/spec/26-seller-intel.md](docs/spec/26-seller-intel.md) | 📋 Specified |
-| HomeBond & BCAR | [→ docs/spec/27-homebond-bcar.md](docs/spec/27-homebond-bcar.md) | 📋 Specified |
-| Agent Transparency | [→ docs/spec/28-agent-tools.md](docs/spec/28-agent-tools.md) | 📋 Specified |
-| Planning Permission | [→ docs/spec/29-planning.md](docs/spec/29-planning.md) | 📋 Specified |
-| Emotional Support | [→ docs/spec/30-emotional.md](docs/spec/30-emotional.md) | 📋 Specified |
-| Neighbourhood Intelligence | [→ docs/spec/31-neighbourhood.md](docs/spec/31-neighbourhood.md) | 📋 Specified |
-| Multi-Modal Commute | [→ docs/spec/32-multi-modal-commute.md](docs/spec/32-multi-modal-commute.md) | 📋 Specified |
-| Amenity Transport Modes | [→ docs/spec/33-amenity-transport.md](docs/spec/33-amenity-transport.md) | 📋 Specified |
+| Bidding Strategy | [→ docs/spec/17-bidding-strategy.md](docs/spec/17-bidding-strategy.md) | ✅ Implemented |
+| Professional Comms Tracker | [→ docs/spec/18-comms-tracker.md](docs/spec/18-comms-tracker.md) | ✅ Implemented |
+| Survey Report Module | [→ docs/spec/19-survey-report.md](docs/spec/19-survey-report.md) | ✅ Implemented |
+| Fall-Through Recovery | [→ docs/spec/20-fall-through.md](docs/spec/20-fall-through.md) | ✅ Implemented |
+| Contract Readiness | [→ docs/spec/21-contract-readiness.md](docs/spec/21-contract-readiness.md) | ✅ Implemented |
+| Snagging Module | [→ docs/spec/22-snagging.md](docs/spec/22-snagging.md) | ✅ Implemented |
+| BER Cost Impact | [→ docs/spec/23-ber-cost.md](docs/spec/23-ber-cost.md) | ✅ Implemented |
+| Post-Completion | [→ docs/spec/24-post-completion.md](docs/spec/24-post-completion.md) | ✅ Implemented |
+| Drawdown Conditions | [→ docs/spec/25-drawdown.md](docs/spec/25-drawdown.md) | ✅ Implemented (via mortgage docs) |
+| Seller Intelligence | [→ docs/spec/26-seller-intel.md](docs/spec/26-seller-intel.md) | ✅ Implemented |
+| HomeBond & BCAR | [→ docs/spec/27-homebond-bcar.md](docs/spec/27-homebond-bcar.md) | ✅ Implemented |
+| Agent Transparency | [→ docs/spec/28-agent-tools.md](docs/spec/28-agent-tools.md) | ✅ Implemented (via CommLog + PPR) |
+| Planning Permission | [→ docs/spec/29-planning.md](docs/spec/29-planning.md) | ✅ Implemented |
+| Emotional Support | [→ docs/spec/30-emotional.md](docs/spec/30-emotional.md) | ✅ Implemented |
+
+### Neighbourhood Modules
+
+| Module | Spec | Status |
+|--------|------|--------|
+| Neighbourhood Intelligence | [→ docs/spec/31-neighbourhood.md](docs/spec/31-neighbourhood.md) | ✅ Implemented |
+| Multi-Modal Commute | [→ docs/spec/32-multi-modal-commute.md](docs/spec/32-multi-modal-commute.md) | ✅ Implemented |
+| Amenity Walkability | [→ docs/spec/33-amenity-transport.md](docs/spec/33-amenity-transport.md) | ✅ Implemented |
+
+## Implementation Stats
+
+| Metric | Count |
+|--------|-------|
+| Prisma Models | 31 |
+| API Routes | 57 |
+| Pages | 9 |
+| Components | 6 |
+| Lib Modules | 25 |
+| Test Suites | 48 |
+| Tests | 229 |
+| Spec Modules | 33 (all implemented) |
+| Design Docs | 10 |
 
 ## Tech Stack
 
@@ -66,9 +85,10 @@ A self-hosted web app for a couple buying a house in Dublin. Track viewings, bid
 | Backend | Next.js API Routes |
 | Database | SQLite via Prisma 5 |
 | File Storage | Local filesystem `/data/media/` |
-| AI | Ollama (local) → Claude API (fallback) |
+| AI | Ollama (local, optional) → Claude API (fallback/primary) |
+| Geo | OSM (free, default) or Google Maps (user-provided key) |
 | Scraping | Cheerio + fetch |
-| Deployment | Docker Compose (app + Ollama + cron) |
+| Deployment | Docker Compose (app + optional Ollama + cron) |
 | Networking | Tailscale |
 
 ## Status Flow
@@ -78,6 +98,16 @@ wishlist → viewing_scheduled → viewed → bidding → sale_agreed → convey
                                                                      ↓
                                                                   dropped
 ```
+
+### Auto-Triggers
+
+| Trigger | Creates |
+|---------|---------|
+| → `bidding` | Seller intel questionnaire prompt |
+| → `sale_agreed` | Conveyancing (18 milestones) + total cost + 4 action items + snag list (if new build) + compliance (if new build) |
+| → `closed` | Post-completion checklist (22 items) + celebration journal entry |
+| → `dropped` (from sale_agreed+) | Fall-through journal entry |
+| Mortgage → `full_approval` | Drawdown conditions checklist |
 
 ## File Structure
 

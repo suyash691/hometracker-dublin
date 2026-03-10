@@ -1,6 +1,7 @@
-import type { GeoProvider, LatLng, Place, Route } from "./types";
+import type { GeoProvider, LatLng, Place, Route, TransportMode } from "./types";
 
 const UA = "HomeTracker/1.0 (Dublin house buying app)";
+const FALLBACK = { walking: { f: 1.3, s: 5 }, cycling: { f: 1.25, s: 15 }, driving: { f: 1.4, s: 30 }, transit: { f: 1.6, s: 20 } };
 
 export class OsmProvider implements GeoProvider {
   private nominatim = process.env.NOMINATIM_URL || "https://nominatim.openstreetmap.org";
@@ -15,10 +16,8 @@ export class OsmProvider implements GeoProvider {
   }
 
   async nearbySearch(center: LatLng, osmTag: string, radiusMetres: number): Promise<Place[]> {
-    // osmTag can be "shop=supermarket" or "name=Tesco" or "leisure=park"
     const [key, val] = osmTag.split("=");
-    const isName = key === "name";
-    const filter = isName ? `["name"~"${val}",i]` : `["${key}"="${val}"]`;
+    const filter = key === "name" ? `["name"~"${val}",i]` : `["${key}"="${val}"]`;
     const query = `[out:json][timeout:10];(node${filter}(around:${radiusMetres},${center.lat},${center.lng});way${filter}(around:${radiusMetres},${center.lat},${center.lng}););out center 5;`;
     const res = await fetch(this.overpass, { method: "POST", body: `data=${encodeURIComponent(query)}`, headers: { "Content-Type": "application/x-www-form-urlencoded", "User-Agent": UA } });
     const data = await res.json();
@@ -30,22 +29,30 @@ export class OsmProvider implements GeoProvider {
     }).filter((p: Place) => p.lat && p.lng);
   }
 
-  async walkingRoute(from: LatLng, to: LatLng): Promise<Route> {
+  async route(from: LatLng, to: LatLng, mode: TransportMode): Promise<Route> {
+    const profile = { walking: "foot", cycling: "bicycle", driving: "car", transit: "foot" }[mode];
     try {
-      const res = await fetch(`${this.osrm}/route/v1/foot/${from.lng},${from.lat};${to.lng},${to.lat}?overview=false`);
+      const res = await fetch(`${this.osrm}/route/v1/${profile}/${from.lng},${from.lat};${to.lng},${to.lat}?overview=false`);
       const data = await res.json();
-      if (data.routes?.[0]) return { distanceMetres: Math.round(data.routes[0].distance), durationMinutes: Math.round(data.routes[0].duration / 60) };
-    } catch { /* fallback below */ }
-    return this.haversineWalk(from, to);
+      if (data.routes?.[0]) {
+        if (mode === "transit") return this.estimateTransit(data.routes[0].distance);
+        return { distanceMetres: Math.round(data.routes[0].distance), durationMinutes: Math.round(data.routes[0].duration / 60) };
+      }
+    } catch { /* fallback */ }
+    return this.fallback(from, to, mode);
   }
 
-  private haversineWalk(a: LatLng, b: LatLng): Route {
-    const R = 6371000;
-    const dLat = (b.lat - a.lat) * Math.PI / 180;
-    const dLng = (b.lng - a.lng) * Math.PI / 180;
+  private estimateTransit(walkDist: number): Route {
+    const dist = Math.round(walkDist * 1.2);
+    return { distanceMetres: dist, durationMinutes: 5 + 8 + Math.round(dist / (20000 / 3600) / 60), summary: "estimated (walk + transit + walk)" };
+  }
+
+  private fallback(a: LatLng, b: LatLng, mode: TransportMode): Route {
+    const R = 6371000, dLat = (b.lat - a.lat) * Math.PI / 180, dLng = (b.lng - a.lng) * Math.PI / 180;
     const h = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * Math.PI / 180) * Math.cos(b.lat * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
     const straight = 2 * R * Math.asin(Math.sqrt(h));
-    const walking = Math.round(straight * 1.3); // walking factor
-    return { distanceMetres: walking, durationMinutes: Math.round(walking / 83) }; // 5km/h
+    const { f, s } = FALLBACK[mode];
+    const dist = Math.round(straight * f);
+    return { distanceMetres: dist, durationMinutes: Math.round(dist / (s * 1000 / 60)), summary: "estimated" };
   }
 }

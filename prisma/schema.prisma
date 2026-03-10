@@ -400,14 +400,15 @@ model JournalEntry {
 // ─── Neighbourhood intelligence (module 31) ───
 
 model PreferredAmenity {
-  id         String  @id @default(uuid())
-  name       String
-  osmTag     String
-  googleType String?
-  icon       String  @default("📍")
-  enabled    Boolean @default(true)
-  isCustom   Boolean @default(false)
-  nearby     NearbyAmenity[]
+  id               String  @id @default(uuid())
+  name             String
+  osmTag           String
+  googleType       String?
+  icon             String  @default("📍")
+  enabled          Boolean @default(true)
+  isCustom         Boolean @default(false)
+  maxWalkingMetres Int     @default(1500)
+  nearby           NearbyAmenity[]
 }
 
 model NearbyAmenity {
@@ -433,6 +434,7 @@ model CommuteEstimate {
   mode             String
   distanceMetres   Int
   durationMinutes  Int
+  routeSummary     String?
   lastUpdated      DateTime @default(now())
   house            House    @relation(fields: [houseId], references: [id], onDelete: Cascade)
 }

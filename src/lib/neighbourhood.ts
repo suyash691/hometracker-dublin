@@ -1,5 +1,8 @@
 import { prisma } from "./db";
-import { getGeoProvider, type LatLng } from "./geo";
+import { getGeoProvider, type LatLng, type TransportMode } from "./geo";
+
+const COMMUTE_MODES: TransportMode[] = ["walking", "cycling", "driving", "transit"];
+const TRANSIT_AMENITY_NAMES = ["Bus Stop", "LUAS Stop", "DART Station"];
 
 export async function refreshNeighbourhood(houseId: string) {
   const house = await prisma.house.findUnique({ where: { id: houseId } });
@@ -8,27 +11,25 @@ export async function refreshNeighbourhood(houseId: string) {
   const geo = getGeoProvider();
   const houseLoc = await geo.geocode(house.address);
 
-  // Refresh amenities
+  // --- Amenities (walking only, with walkability threshold) ---
   const amenities = await prisma.preferredAmenity.findMany({ where: { enabled: true } });
   await prisma.nearbyAmenity.deleteMany({ where: { houseId } });
 
   for (const am of amenities) {
     try {
-      const useGoogle = process.env.GEO_PROVIDER === "google" && am.googleType;
-      const query = useGoogle ? am.googleType! : am.osmTag;
+      const query = process.env.GEO_PROVIDER === "google" && am.googleType ? am.googleType : am.osmTag;
       const places = await geo.nearbySearch(houseLoc, query, 2000);
       if (places.length === 0) continue;
       const closest = places.sort((a, b) => dist(houseLoc, a) - dist(houseLoc, b))[0];
-      const route = await geo.walkingRoute(houseLoc, closest);
+      const walk = await geo.route(houseLoc, closest, "walking");
       await prisma.nearbyAmenity.create({
-        data: { houseId, amenityId: am.id, name: closest.name, distanceMetres: route.distanceMetres, walkingMinutes: route.durationMinutes, lat: closest.lat, lng: closest.lng, address: closest.address },
+        data: { houseId, amenityId: am.id, name: closest.name, distanceMetres: walk.distanceMetres, walkingMinutes: walk.durationMinutes, lat: closest.lat, lng: closest.lng, address: closest.address },
       });
-    } catch { /* skip failed lookups */ }
-    // Rate limit for OSM
+    } catch { /* skip */ }
     if (process.env.GEO_PROVIDER !== "google") await sleep(1100);
   }
 
-  // Refresh commute for both partners
+  // --- Commute (all 4 modes per workplace) ---
   const profile = await prisma.buyerProfile.findFirst();
   await prisma.commuteEstimate.deleteMany({ where: { houseId } });
   const workplaces = [
@@ -39,11 +40,13 @@ export async function refreshNeighbourhood(houseId: string) {
   for (const wp of workplaces) {
     try {
       const workLoc = await geo.geocode(wp.address!);
-      const walk = await geo.walkingRoute(houseLoc, workLoc);
-      await prisma.commuteEstimate.create({
-        data: { houseId, workplaceLabel: `${wp.label}'s workplace`, workplaceAddress: wp.address!, mode: "walking", distanceMetres: walk.distanceMetres, durationMinutes: walk.durationMinutes },
-      });
-      if (process.env.GEO_PROVIDER !== "google") await sleep(1100);
+      for (const mode of COMMUTE_MODES) {
+        const r = await geo.route(houseLoc, workLoc, mode);
+        await prisma.commuteEstimate.create({
+          data: { houseId, workplaceLabel: `${wp.label}'s workplace`, workplaceAddress: wp.address!, mode, distanceMetres: r.distanceMetres, durationMinutes: r.durationMinutes, routeSummary: r.summary },
+        });
+        if (process.env.GEO_PROVIDER !== "google") await sleep(1100);
+      }
     } catch { /* skip */ }
   }
 
@@ -53,8 +56,20 @@ export async function refreshNeighbourhood(houseId: string) {
   });
 }
 
+/** Check if any transit stop is walkable for a house */
+export async function getTransitAccessibility(houseId: string) {
+  const amenities = await prisma.nearbyAmenity.findMany({
+    where: { houseId },
+    include: { amenity: true },
+  });
+  const transitAmenities = amenities.filter(a => TRANSIT_AMENITY_NAMES.includes(a.amenity.name));
+  const walkable = transitAmenities.filter(a => a.distanceMetres <= a.amenity.maxWalkingMetres);
+  if (walkable.length > 0) return { hasWalkableTransit: true, nearest: walkable[0] };
+  const nearest = transitAmenities.sort((a, b) => a.distanceMetres - b.distanceMetres)[0];
+  return { hasWalkableTransit: false, nearest: nearest || null, warning: nearest ? `Nearest transit: ${nearest.amenity.icon} ${nearest.name} at ${nearest.distanceMetres}m (not walkable)` : "No public transit found nearby" };
+}
+
 function dist(a: LatLng, b: { lat: number; lng: number }) {
   return Math.sqrt((a.lat - b.lat) ** 2 + (a.lng - b.lng) ** 2);
 }
-
 function sleep(ms: number) { return new Promise(r => setTimeout(r, ms)); }

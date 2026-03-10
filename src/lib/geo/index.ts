@@ -1,5 +1,4 @@
-// Geo provider factory — picks OSM (free) or Google Maps based on env
-export type { LatLng, Place, Route, GeoProvider } from "./types";
+export type { LatLng, Place, Route, GeoProvider, TransportMode } from "./types";
 import type { GeoProvider } from "./types";
 import { OsmProvider } from "./osm";
 import { GoogleMapsProvider } from "./google";

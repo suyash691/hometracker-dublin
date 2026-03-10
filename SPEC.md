@@ -56,6 +56,7 @@ A self-hosted web app for a couple buying a house in Dublin. Track viewings, bid
 | Emotional Support | [→ docs/spec/30-emotional.md](docs/spec/30-emotional.md) | 📋 Specified |
 | Neighbourhood Intelligence | [→ docs/spec/31-neighbourhood.md](docs/spec/31-neighbourhood.md) | 📋 Specified |
 | Multi-Modal Commute | [→ docs/spec/32-multi-modal-commute.md](docs/spec/32-multi-modal-commute.md) | 📋 Specified |
+| Amenity Transport Modes | [→ docs/spec/33-amenity-transport.md](docs/spec/33-amenity-transport.md) | 📋 Specified |
 
 ## Tech Stack
 

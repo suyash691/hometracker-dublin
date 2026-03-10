@@ -92,3 +92,13 @@ GET/POST /api/journal?houseId=X
   shareable: true
 }
 ```
+
+## Neighbourhood Endpoints (Module 31)
+
+```
+GET/POST  /api/amenity-preferences           # list / add custom
+PUT       /api/amenity-preferences/:id        # toggle enabled
+POST      /api/seed-amenities                 # seed 20 defaults
+GET       /api/houses/:id/neighbourhood       # cached amenities + commute + transit warning
+POST      /api/houses/:id/neighbourhood       # trigger fresh geo lookup
+```

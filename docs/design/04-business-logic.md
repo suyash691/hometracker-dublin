@@ -35,10 +35,9 @@ function checkExemption(type: string, sizeSqm: number, gardenSqm: number) {
 
 | Trigger | Creates |
 |---------|---------|
-| status → `bidding` | SellerIntel questionnaire prompt, BiddingStrategy stub |
 | status → `sale_agreed` | ConveyancingTracker + 18 milestones, TotalCostEstimate, 4 action items |
 | status → `sale_agreed` + isNewBuild | SnagItem checklist, NewBuildCompliance checklist |
-| status → `closed` | Post-completion moving checklist (19 items) |
+| status → `closed` | Post-completion moving checklist (22 items) |
 | status → `dropped` (from sale_agreed+) | FallThroughRecord prompt |
 | MortgageTracker.status → `full_approval` | Drawdown conditions checklist |
 | viewingDate passes | Journal gut-check prompt |

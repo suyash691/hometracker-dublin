@@ -5,7 +5,6 @@
 ## Status Change Cascade
 
 ```
-bidding ──→ Auto-create: SellerIntel stub, BiddingStrategy stub
             Auto-prompt: "Set your hard ceiling for this property"
 
 sale_agreed ──→ Auto-create: ConveyancingTracker + 18 milestones
@@ -18,7 +17,7 @@ dropped (from sale_agreed+) ──→ Auto-prompt: FallThroughRecord form
                                  Auto-create: "Review what went wrong" action item
                                  Cron: monitor Daft.ie for re-listing
 
-closed ──→ Auto-create: Post-completion moving checklist (19 items)
+closed ──→ Auto-create: Post-completion moving checklist (22 items)
            Auto-trigger: "🏠 Congratulations!" milestone celebration
 
 full_approval ──→ Auto-create: Drawdown conditions checklist

@@ -1,6 +1,6 @@
 # Module 22: Snagging Module (New Builds)
 
-> Parent: [SPEC.md](../../SPEC.md) | Status: 📋 Specified | Source: Persona Audit (Builder + Buyer)
+> Parent: [SPEC.md](../../SPEC.md) | Status: ✅ Implemented | Source: Persona Audit (Builder + Buyer)
 
 ## Problem
 
@@ -26,5 +26,5 @@ Average new build has 110-160 snags. The viewing checklist is for second-hand pr
 ```
 GET/POST  /api/houses/:id/snags
 PUT       /api/houses/:id/snags/:snagId
-GET       /api/houses/:id/snags/export    # PDF export
+# PDF export: future enhancement
 ```

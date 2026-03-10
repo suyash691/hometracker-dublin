@@ -1,6 +1,6 @@
 # Module 20: Fall-Through Recovery
 
-> Parent: [SPEC.md](../../SPEC.md) | Status: 📋 Specified | Source: Persona Audit (Reseller + Buyer)
+> Parent: [SPEC.md](../../SPEC.md) | Status: ✅ Implemented | Source: Persona Audit (Reseller + Buyer)
 
 ## Problem
 

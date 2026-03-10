@@ -1,6 +1,6 @@
 # Module 27: HomeBond & BCAR
 
-> Parent: [SPEC.md](../../SPEC.md) | Status: 📋 Specified | Source: Persona Audit (Builder)
+> Parent: [SPEC.md](../../SPEC.md) | Status: ✅ Implemented | Source: Persona Audit (Builder)
 
 ## Problem
 

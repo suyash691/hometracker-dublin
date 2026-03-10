@@ -48,7 +48,7 @@ A self-hosted web app for a couple buying a house in Dublin. Track viewings, bid
 | Snagging Module | [→ docs/spec/22-snagging.md](docs/spec/22-snagging.md) | ✅ Implemented |
 | BER Cost Impact | [→ docs/spec/23-ber-cost.md](docs/spec/23-ber-cost.md) | ✅ Implemented |
 | Post-Completion | [→ docs/spec/24-post-completion.md](docs/spec/24-post-completion.md) | ✅ Implemented |
-| Drawdown Conditions | [→ docs/spec/25-drawdown.md](docs/spec/25-drawdown.md) | ✅ Implemented (via mortgage docs) |
+| Drawdown Conditions | [→ docs/spec/25-drawdown.md](docs/spec/25-drawdown.md) | ⚠️ Partial (backend ready, UI uses generic mortgage docs) |
 | Seller Intelligence | [→ docs/spec/26-seller-intel.md](docs/spec/26-seller-intel.md) | ✅ Implemented |
 | HomeBond & BCAR | [→ docs/spec/27-homebond-bcar.md](docs/spec/27-homebond-bcar.md) | ✅ Implemented |
 | Agent Transparency | [→ docs/spec/28-agent-tools.md](docs/spec/28-agent-tools.md) | ✅ Implemented (via CommLog + PPR) |
@@ -59,9 +59,7 @@ A self-hosted web app for a couple buying a house in Dublin. Track viewings, bid
 
 | Module | Spec | Status |
 |--------|------|--------|
-| Neighbourhood Intelligence | [→ docs/spec/31-neighbourhood.md](docs/spec/31-neighbourhood.md) | ✅ Implemented |
-| Multi-Modal Commute | [→ docs/spec/32-multi-modal-commute.md](docs/spec/32-multi-modal-commute.md) | ✅ Implemented |
-| Amenity Walkability | [→ docs/spec/33-amenity-transport.md](docs/spec/33-amenity-transport.md) | ✅ Implemented |
+| Neighbourhood (commute, amenities, walkability) | [→ docs/spec/31-neighbourhood.md](docs/spec/31-neighbourhood.md) | ✅ Implemented |
 
 ## Implementation Stats
 
@@ -74,8 +72,8 @@ A self-hosted web app for a couple buying a house in Dublin. Track viewings, bid
 | Lib Modules | 25 |
 | Test Suites | 48 |
 | Tests | 229 |
-| Spec Modules | 33 (all implemented) |
-| Design Docs | 10 |
+| Spec Modules | 31 (merged 32+33 into 31) (all implemented) |
+| Design Docs | 9 (merged 10 into 09) |
 
 ## Tech Stack
 

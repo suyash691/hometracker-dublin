@@ -1,6 +1,6 @@
 # Module 25: Mortgage Drawdown Conditions
 
-> Parent: [SPEC.md](../../SPEC.md) | Status: 📋 Specified | Source: Persona Audit (Buyer)
+> Parent: [SPEC.md](../../SPEC.md) | Status: ✅ Implemented | Source: Persona Audit (Buyer)
 
 ## Problem
 

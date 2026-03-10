@@ -14,8 +14,7 @@
 | [→ docs/design/06-pages.md](docs/design/06-pages.md) | Page wireframes and layouts for all pages |
 | [→ docs/design/07-data-flows.md](docs/design/07-data-flows.md) | Integration flows, cron jobs, automation triggers |
 | [→ docs/design/08-deployment.md](docs/design/08-deployment.md) | Docker, backup, first-run setup, env vars |
-| [→ docs/design/09-neighbourhood.md](docs/design/09-neighbourhood.md) | Geo provider abstraction (OSM/Google), amenity search, commute, walkability |
-| [→ docs/design/10-multi-modal-commute.md](docs/design/10-multi-modal-commute.md) | Walking/cycling/driving/transit routing, OSRM profiles, improved fallback estimates |
+| [→ docs/design/09-neighbourhood.md](docs/design/09-neighbourhood.md) | Neighbourhood: geo providers (OSM/Google), multi-modal commute, amenity walkability, transit warning |
 
 ## Design Principles
 

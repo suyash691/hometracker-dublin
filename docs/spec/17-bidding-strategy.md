@@ -1,6 +1,6 @@
 # Module 17: Bidding Strategy
 
-> Parent: [SPEC.md](../../SPEC.md) | Status: 📋 Specified | Source: Persona Audit (Reseller + Buyer)
+> Parent: [SPEC.md](../../SPEC.md) | Status: ✅ Implemented | Source: Persona Audit (Reseller + Buyer)
 
 ## Problem
 

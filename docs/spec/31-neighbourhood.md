@@ -1,6 +1,6 @@
 # Module 31: Neighbourhood Intelligence — Commute, Amenities & Walkability
 
-> Parent: [SPEC.md](../../SPEC.md) | Status: 📋 Specified | Source: User request + Reseller audit gap #8
+> Parent: [SPEC.md](../../SPEC.md) | Status: ✅ Implemented | Source: User request + Reseller audit gap #8
 
 ## Problem
 
@@ -120,7 +120,6 @@ GET    /api/houses/:id/neighbourhood               # all cached amenities + comm
 POST   /api/houses/:id/neighbourhood/refresh       # trigger fresh lookup
 
 # Commute
-GET    /api/houses/:id/commute                     # cached commute estimates
 ```
 
 ## UI
@@ -226,3 +225,209 @@ interface GeoProvider {
 ```
 
 Both providers implement this interface. The app picks based on `GEO_PROVIDER` env var.
+
+---
+
+# Module 32: Multi-Modal Commute Routing
+
+> Parent: [SPEC.md](../../SPEC.md) | Status: ✅ Implemented | Extends: Module 31 (Neighbourhood)
+
+## Problem
+
+The current neighbourhood module only calculates walking routes, and the OSM fallback uses a crude `haversine × 1.3` factor. Dublin commuters use a mix of walking, cycling, driving, bus, LUAS, and DART. A house that's 45 minutes by bus might be 15 minutes by LUAS — this difference is a major factor in purchase decisions.
+
+## Transport Modes
+
+| Mode | Icon | OSM Provider | Google Provider |
+|------|------|-------------|-----------------|
+| Walking | 🚶 | OSRM `/foot/` | Directions API `mode=walking` |
+| Cycling | 🚲 | OSRM `/bicycle/` | Directions API `mode=bicycling` |
+| Driving | 🚗 | OSRM `/car/` | Directions API `mode=driving` |
+| Transit | 🚌 | Not natively supported — see below | Directions API `mode=transit` |
+
+### Transit Routing (Dublin-specific)
+
+OSRM doesn't support public transit. For the OSM provider, transit is handled differently:
+
+**Option A: TFI Journey Planner scraping** — Transport for Ireland (transportforireland.ie) has a journey planner. Scrape the result for a given origin/destination.
+
+**Option B: OpenTripPlanner** — Open-source transit router that uses GTFS data. NTA publishes Dublin GTFS feeds. Can be self-hosted but heavy.
+
+**Option C: Estimate from nearest stop** — Find nearest LUAS/DART/bus stop (already in amenity data), estimate walk-to-stop + average transit time + walk-from-stop. Less accurate but no external dependency.
+
+**Recommended: Option C for OSM provider (simple, no external dependency), Google Directions API `mode=transit` for Google provider (accurate, includes real timetables).**
+
+## Routing Accuracy (replacing haversine fallback)
+
+| Scenario | Current | Proposed |
+|----------|---------|----------|
+| OSRM available | Accurate walking route | Accurate route for all 3 OSRM profiles (foot/bicycle/car) |
+| OSRM unavailable | `haversine × 1.3` (crude) | `haversine × mode_factor` with better factors |
+| Google available | N/A | Accurate for all 4 modes including transit |
+
+### Improved Haversine Fallback Factors
+
+When OSRM is unreachable, use research-based multipliers:
+
+| Mode | Factor | Speed | Source |
+|------|--------|-------|--------|
+| Walking | × 1.3 | 5 km/h | Manhattan distance approximation |
+| Cycling | × 1.25 | 15 km/h | Slightly more direct than walking |
+| Driving | × 1.4 | 30 km/h (urban Dublin) | More detours, one-way systems |
+| Transit | × 1.6 | 20 km/h average | Includes walk-to-stop, waiting, transfers |
+
+## Updated Entity: CommuteEstimate
+
+| Field | Type | Notes |
+|-------|------|-------|
+| id | uuid | |
+| houseId | fk | |
+| workplaceLabel | string | "Sarah's workplace" |
+| workplaceAddress | string | |
+| mode | enum | walking, cycling, driving, transit |
+| distanceMetres | int | |
+| durationMinutes | int | |
+| routeSummary | string? | e.g. "via LUAS Green Line" or "via N11" |
+| lastUpdated | datetime | |
+
+Each workplace now gets **4 rows** (one per mode) instead of 1.
+
+## Updated GeoProvider Interface
+
+```typescript
+interface GeoProvider {
+  geocode(address: string): Promise<LatLng>;
+  nearbySearch(center: LatLng, query: string, radiusMetres: number): Promise<Place[]>;
+  route(from: LatLng, to: LatLng, mode: "walking" | "cycling" | "driving" | "transit"): Promise<Route>;
+}
+
+interface Route {
+  distanceMetres: number;
+  durationMinutes: number;
+  summary?: string;  // e.g. "via LUAS Green Line"
+}
+```
+
+### OSM Provider Implementation
+
+```
+route(from, to, "walking")  → OSRM /route/v1/foot/{coords}
+route(from, to, "cycling")  → OSRM /route/v1/bicycle/{coords}
+route(from, to, "driving")  → OSRM /route/v1/car/{coords}
+route(from, to, "transit")  → estimate: find nearest transit stop, walk + avg transit speed + walk
+```
+
+### Google Provider Implementation
+
+```
+route(from, to, mode)  → Directions API with mode param (all 4 supported natively)
+```
+
+## UI: Neighbourhood Tab (updated)
+
+```
+🚶 Commute — Sarah's workplace (Dublin 2)
+┌──────────┬──────────┬──────────┬──────────┐
+│ 🚶 Walk  │ 🚲 Cycle │ 🚗 Drive │ 🚌 Transit│
+│ 35 min   │ 12 min   │ 18 min   │ 22 min   │
+│ 2.8 km   │ 3.1 km   │ 4.2 km   │ via LUAS │
+└──────────┴──────────┴──────────┴──────────┘
+
+🚶 Commute — John's workplace (Sandyford)
+┌──────────┬──────────┬──────────┬──────────┐
+│ 🚶 Walk  │ 🚲 Cycle │ 🚗 Drive │ 🚌 Transit│
+│ 85 min   │ 28 min   │ 25 min   │ 35 min   │
+│ 7.1 km   │ 7.8 km   │ 9.2 km   │ via LUAS │
+└──────────┴──────────┴──────────┴──────────┘
+```
+
+## API Changes
+
+No new endpoints. The existing `POST /api/houses/:id/neighbourhood` refresh now creates 4 CommuteEstimate rows per workplace (one per mode) instead of 1.
+
+`GET /api/houses/:id/neighbourhood` returns all commute estimates grouped by workplace.
+
+## Environment Variables (no changes)
+
+Same as Module 31. OSRM profiles (foot/bicycle/car) are all available on the public OSRM server. Google Directions API supports all 4 modes with the same API key.
+
+---
+
+# Module 33: Amenity Walkability Threshold
+
+> Parent: [SPEC.md](../../SPEC.md) | Status: ✅ Implemented | Extends: Module 31 (Neighbourhood)
+
+## Concept
+
+An amenity that isn't walkable effectively doesn't exist for daily life. Instead of showing multi-modal transport options, simply flag amenities as "walkable" or "not walkable" based on a threshold.
+
+## Thresholds
+
+| Category | Max Walking Distance | Max Walking Time | Rationale |
+|----------|---------------------|------------------|-----------|
+| Daily essentials (supermarket, pharmacy, café) | 1,000m | 12 min | You'd go daily or multiple times a week |
+| Regular use (GP, park, restaurant) | 1,500m | 18 min | Weekly visits, acceptable walk |
+| Daily commute infra (bus stop, LUAS, DART) | 1,000m | 12 min | Used twice daily — must be walkable |
+| Destination (gym, school, pool) | 2,000m | 25 min | Less frequent, willing to walk further |
+
+## Display Logic
+
+- **Within threshold**: Show normally with distance + time: `🛒 Tesco 350m · 4 min`
+- **Beyond threshold**: Show with warning: `🛒 Tesco 2.1km · ⚠ not walkable`
+- **Not found within 2km**: Show as missing: `🛒 Tesco — ✗ none nearby`
+
+## PreferredAmenity Change
+
+Add `maxWalkingMetres` field:
+
+| Field | Type | Default | Notes |
+|-------|------|---------|-------|
+| maxWalkingMetres | int | 1500 | walkability threshold |
+
+### Defaults
+
+| Amenity | maxWalkingMetres |
+|---------|-----------------|
+| Tesco, Lidl, Aldi, Dunnes, SuperValu, Any Supermarket | 1000 |
+| Pharmacy, Café | 1000 |
+| **Bus Stop, LUAS Stop, DART Station** | **1000** |
+| GP, Park, Playground, Restaurant | 1500 |
+| Gym, Pool, Pilates, Primary School, Secondary School | 2000 |
+
+Users can adjust thresholds per amenity in preferences.
+
+## Neighbourhood Tab UI
+
+```
+🛒 Supermarkets
+  Tesco Express Phibsborough       350m · 4 min ✓
+  Lidl Phibsborough                600m · 8 min ✓
+  Aldi                             — ✗ none nearby
+
+🏋️ Activities
+  Blessington St Basin (park)      200m · 3 min ✓
+  FLYEfit (gym)                    1.8km · 22 min ⚠ not walkable
+  LUAS Broadstone                  500m · 7 min ✓
+
+💊 Services
+  Hickey's Pharmacy                300m · 4 min ✓
+  Dr Murphy (GP)                   1.2km · 15 min ✓
+```
+
+The ✓/⚠/✗ indicators give an instant "walkability score" for the neighbourhood without cluttering with driving/cycling times that don't matter at this distance.
+
+## Transit Accessibility Warning
+
+If **none** of the three transit types (bus, LUAS, DART) are within their walkable threshold (1,000m), the house gets a prominent warning on the dashboard and house detail:
+
+```
+⚠ No walkable public transit — nearest bus stop is 1.4km, nearest LUAS is 2.8km
+  This house may require driving for daily commute.
+```
+
+This is surfaced:
+- On the **house detail page** as a red banner above the stat cards
+- On the **house list** as a 🚫🚌 icon on the card
+- On the **dashboard kanban** cards for houses in bidding/sale_agreed
+
+This is critical for Dublin where many buyers rely on public transit and a house without walkable transit access is a fundamentally different proposition.

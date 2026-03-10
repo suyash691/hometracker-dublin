@@ -1,6 +1,6 @@
 # Module 29: Planning Permission Calculator
 
-> Parent: [SPEC.md](../../SPEC.md) | Status: 📋 Specified | Source: Persona Audit (Builder)
+> Parent: [SPEC.md](../../SPEC.md) | Status: ✅ Implemented | Source: Persona Audit (Builder)
 
 ## Problem
 

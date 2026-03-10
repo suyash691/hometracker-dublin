@@ -128,3 +128,49 @@ model JournalEntry {
   newBuildCompliance  NewBuildCompliance?
   journalEntries      JournalEntry[]
 ```
+
+## Neighbourhood Models (Module 31)
+
+```prisma
+model PreferredAmenity {
+  id               String  @id @default(uuid())
+  name             String
+  osmTag           String
+  googleType       String?
+  icon             String  @default("📍")
+  enabled          Boolean @default(true)
+  isCustom         Boolean @default(false)
+  maxWalkingMetres Int     @default(1500)
+  nearby           NearbyAmenity[]
+}
+
+model NearbyAmenity {
+  id             String   @id @default(uuid())
+  houseId        String
+  amenityId      String
+  name           String
+  distanceMetres Int
+  walkingMinutes Int
+  lat            Float
+  lng            Float
+  address        String?
+  lastUpdated    DateTime @default(now())
+  house          House    @relation(...)
+  amenity        PreferredAmenity @relation(...)
+}
+
+model CommuteEstimate {
+  id               String   @id @default(uuid())
+  houseId          String
+  workplaceLabel   String
+  workplaceAddress String
+  mode             String   // walking, cycling, driving, transit
+  distanceMetres   Int
+  durationMinutes  Int
+  routeSummary     String?
+  lastUpdated      DateTime @default(now())
+  house            House    @relation(...)
+}
+```
+
+Note: BuyerProfile has `workplaceAddress1` and `workplaceAddress2` (per-partner).

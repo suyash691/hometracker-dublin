@@ -1,16 +1,50 @@
-import { PrismaClient } from "@prisma/client";
+function mockModel() {
+  return {
+    findMany: jest.fn().mockResolvedValue([]),
+    findUnique: jest.fn().mockResolvedValue(null),
+    findFirst: jest.fn().mockResolvedValue(null),
+    create: jest.fn().mockImplementation((args: { data: Record<string, unknown> }) => Promise.resolve({ id: "new-id", ...args.data })),
+    createMany: jest.fn().mockResolvedValue({ count: 0 }),
+    update: jest.fn().mockImplementation((args: { data: Record<string, unknown> }) => Promise.resolve({ id: "id", ...args.data })),
+    upsert: jest.fn().mockImplementation((args: { create: Record<string, unknown> }) => Promise.resolve({ id: "id", ...args.create })),
+    delete: jest.fn().mockResolvedValue({}),
+    deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
+    count: jest.fn().mockResolvedValue(0),
+  };
+}
 
-const prisma = {
-  house: { findMany: jest.fn(), findUnique: jest.fn(), create: jest.fn(), update: jest.fn(), delete: jest.fn() },
-  bidHistory: { findMany: jest.fn(), create: jest.fn(), findFirst: jest.fn() },
-  actionItem: { findMany: jest.fn(), create: jest.fn(), update: jest.fn(), delete: jest.fn() },
-  mortgageTracker: { findMany: jest.fn(), create: jest.fn(), update: jest.fn() },
-  mortgageDocument: { findMany: jest.fn() },
-  renovationEstimate: { findMany: jest.fn(), create: jest.fn() },
-  viewingChecklist: { findMany: jest.fn(), create: jest.fn(), update: jest.fn() },
-  checklistTemplate: { findMany: jest.fn(), findUnique: jest.fn(), findFirst: jest.fn(), create: jest.fn() },
-} as unknown as PrismaClient;
+export const prisma = {
+  house: mockModel(),
+  media: mockModel(),
+  bidHistory: mockModel(),
+  actionItem: mockModel(),
+  mortgageTracker: mockModel(),
+  mortgageDocument: mockModel(),
+  mortgageExemption: mockModel(),
+  renovationEstimate: mockModel(),
+  viewingChecklist: mockModel(),
+  checklistTemplate: mockModel(),
+  activityLog: mockModel(),
+  buyerProfile: mockModel(),
+  schemeTracker: mockModel(),
+  totalCostEstimate: mockModel(),
+  conveyancingTracker: mockModel(),
+  conveyancingMilestone: mockModel(),
+  apartmentDetails: mockModel(),
+  defectiveBlocksAssessment: mockModel(),
+  pPRComparable: mockModel(),
+  biddingStrategy: mockModel(),
+  commLog: mockModel(),
+  surveyFinding: mockModel(),
+  fallThroughRecord: mockModel(),
+  contractReadiness: mockModel(),
+  snagItem: mockModel(),
+  sellerIntel: mockModel(),
+  newBuildCompliance: mockModel(),
+  journalEntry: mockModel(),
+  preferredAmenity: mockModel(),
+  nearbyAmenity: mockModel(),
+  commuteEstimate: mockModel(),
+};
 
 jest.mock("@/lib/db", () => ({ prisma }));
-
-export { prisma };

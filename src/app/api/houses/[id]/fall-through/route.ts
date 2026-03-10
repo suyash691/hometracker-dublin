@@ -11,5 +11,8 @@ export async function POST(req: NextRequest, ctx: Ctx) {
   await prisma.fallThroughRecord.create({ data: { houseId: id, ...body } });
   await prisma.house.update({ where: { id }, data: { status: "dropped" } });
   await prisma.actionItem.create({ data: { houseId: id, title: "Review what went wrong", category: "other", status: "todo" } });
+  await prisma.journalEntry.create({
+    data: { houseId: id, type: "milestone", content: "💔 Sale fell through. It's okay — the average Dublin buyer bids on 6 properties." },
+  });
   return NextResponse.json({ ok: true }, { status: 201 });
 }

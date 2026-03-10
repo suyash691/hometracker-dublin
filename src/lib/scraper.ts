@@ -34,7 +34,13 @@ export async function scrapeDaftListing(url: string): Promise<ScrapedListing> {
       "Cache-Control": "max-age=0",
     },
   });
-  if (!res.ok) throw new Error(`Failed to fetch listing (${res.status}). ${res.status === 403 ? "Daft.ie may be blocking automated requests. Try again in a few minutes." : "Check the URL is correct."}`);
+  console.log(`[scraper] Fetching: ${url}`);
+  console.log(`[scraper] Response status: ${res.status}, headers: ${JSON.stringify(Object.fromEntries(res.headers.entries()))}`);
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    console.log(`[scraper] Error body (first 500 chars): ${body.substring(0, 500)}`);
+    throw new Error(`Failed to fetch listing (${res.status}). ${res.status === 403 ? "Daft.ie is blocking automated requests. Use manual entry instead." : "Check the URL is correct."}`);
+  }
   const html = await res.text();
   const $ = cheerio.load(html);
 

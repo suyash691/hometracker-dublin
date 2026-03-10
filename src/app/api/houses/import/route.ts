@@ -57,6 +57,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(house, { status: 201 });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Scraping failed";
+    console.error(`[import] Failed for ${url}:`, message);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

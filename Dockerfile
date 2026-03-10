@@ -1,4 +1,5 @@
 FROM node:22-alpine AS base
+RUN apk add --no-cache openssl
 
 FROM base AS deps
 WORKDIR /app
@@ -23,7 +24,7 @@ COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 
-RUN mkdir -p /app/data/media && chown -R nextjs:nodejs /app/data
+RUN mkdir -p /app/data/media /app/data/ppr && chown -R nextjs:nodejs /app/data
 
 USER nextjs
 EXPOSE 3000

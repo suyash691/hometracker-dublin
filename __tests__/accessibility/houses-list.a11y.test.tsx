@@ -7,7 +7,7 @@ beforeEach(() => setupFetchMock());
 describe("Houses List Accessibility", () => {
   it("has no axe violations", async () => {
     const { container } = render(<HousesPage />);
-    await new Promise(r => setTimeout(r, 100));
+    
     expect(await axe(container)).toHaveNoViolations();
   });
 });

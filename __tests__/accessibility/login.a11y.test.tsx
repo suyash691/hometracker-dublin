@@ -7,7 +7,7 @@ jest.mock("next/navigation", () => ({ useRouter: () => ({ push: jest.fn() }) }))
 describe("Login Accessibility", () => {
   it("has no axe violations", async () => {
     const { container } = render(<LoginPage />);
-    const results = await axe(container);
+    await new Promise(r => setTimeout(r, 50)); const results = await axe(container);
     expect(results).toHaveNoViolations();
   });
 });

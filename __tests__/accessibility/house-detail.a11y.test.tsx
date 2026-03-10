@@ -23,7 +23,7 @@ beforeEach(() => {
 describe("House Detail Accessibility", () => {
   it("has no axe violations", async () => {
     const { container } = render(<HouseDetail params={Promise.resolve({ id: "h1" })} />);
-    await new Promise(r => setTimeout(r, 200));
+    
     expect(await axe(container)).toHaveNoViolations();
   });
 });

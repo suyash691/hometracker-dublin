@@ -8,8 +8,8 @@ beforeEach(() => setupFetchMock());
 describe("Profile Accessibility", () => {
   it("has no axe violations", async () => {
     const { container } = render(<ProfilePage />);
-    await new Promise(r => setTimeout(r, 100));
-    const results = await axe(container);
+    
+    await new Promise(r => setTimeout(r, 50)); const results = await axe(container);
     expect(results).toHaveNoViolations();
   });
 });

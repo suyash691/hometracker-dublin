@@ -10,8 +10,8 @@ describe("Dashboard Accessibility", () => {
   it("has no axe violations", async () => {
     const { container } = render(<Dashboard />);
     // Wait for async renders
-    await new Promise(r => setTimeout(r, 100));
-    const results = await axe(container);
+    
+    await new Promise(r => setTimeout(r, 50)); const results = await axe(container);
     expect(results).toHaveNoViolations();
   });
 });

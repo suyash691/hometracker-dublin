@@ -67,10 +67,11 @@ export default function SchemesPage() {
 
       <div className="bg-white rounded-lg border p-5">
         <h2 className="text-lg font-semibold mb-3">📊 Funding Stack per House</h2>
+        <label className="block"><span className="text-sm text-gray-500 mb-1">Select a house to see funding breakdown</span>
         <select value={selectedHouse} onChange={e => setSelectedHouse(e.target.value)} className="border rounded px-3 py-2 text-sm mb-3 w-full">
           <option value="">Select a house...</option>
           {houses.filter(h => h.askingPrice).map(h => <option key={h.id} value={h.id}>{h.address} — €{h.askingPrice!.toLocaleString()}</option>)}
-        </select>
+        </select></label>
         {selectedHouse && limits && (() => {
           const h = houses.find(x => x.id === selectedHouse);
           if (!h?.askingPrice) return null;

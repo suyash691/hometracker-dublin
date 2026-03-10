@@ -42,20 +42,30 @@ If BER is C or below, include energy upgrade estimates (insulation, windows, hea
 Respond with ONLY a JSON array, no markdown fences or other text. Example:
 [{"item":"Kitchen refit","estimatedCostLow":8000,"estimatedCostHigh":15000,"notes":"Based on standard 3-bed semi kitchen"}]`;
 
-  // Try Ollama first (local), fall back to Claude
-  const ollamaUrl = process.env.OLLAMA_URL || "http://localhost:11434";
+  // If ANTHROPIC_API_KEY is set and OLLAMA_URL is not explicitly set, use Claude directly.
+  // If OLLAMA_URL is explicitly set, try Ollama first, fall back to Claude.
+  // If neither is set, error.
+  const ollamaUrl = process.env.OLLAMA_URL;
   const anthropicKey = process.env.ANTHROPIC_API_KEY;
 
   let responseText: string;
 
-  try {
-    responseText = await callOllama(ollamaUrl, prompt);
-  } catch {
-    if (anthropicKey) {
-      responseText = await callClaude(anthropicKey, prompt);
-    } else {
-      throw new Error("No AI backend available. Set OLLAMA_URL or ANTHROPIC_API_KEY.");
+  if (ollamaUrl) {
+    // Ollama explicitly configured — try it first, fall back to Claude
+    try {
+      responseText = await callOllama(ollamaUrl, prompt);
+    } catch {
+      if (anthropicKey) {
+        responseText = await callClaude(anthropicKey, prompt);
+      } else {
+        throw new Error("Ollama failed and no ANTHROPIC_API_KEY set.");
+      }
     }
+  } else if (anthropicKey) {
+    // No Ollama — use Claude directly (no timeout delay)
+    responseText = await callClaude(anthropicKey, prompt);
+  } else {
+    throw new Error("No AI backend available. Set OLLAMA_URL or ANTHROPIC_API_KEY.");
   }
 
   // Parse JSON from response — handle markdown fences if present

@@ -49,6 +49,8 @@ model House {
   sellerIntel         SellerIntel?
   newBuildCompliance  NewBuildCompliance?
   journalEntries      JournalEntry[]
+  nearbyAmenities     NearbyAmenity[]
+  commuteEstimates    CommuteEstimate[]
 }
 
 model Media {
@@ -391,4 +393,44 @@ model JournalEntry {
   content   String
   createdAt DateTime @default(now())
   house     House?   @relation(fields: [houseId], references: [id], onDelete: SetNull)
+}
+
+// ─── Neighbourhood intelligence (module 31) ───
+
+model PreferredAmenity {
+  id         String  @id @default(uuid())
+  name       String
+  osmTag     String
+  googleType String?
+  icon       String  @default("📍")
+  enabled    Boolean @default(true)
+  isCustom   Boolean @default(false)
+  nearby     NearbyAmenity[]
+}
+
+model NearbyAmenity {
+  id             String   @id @default(uuid())
+  houseId        String
+  amenityId      String
+  name           String
+  distanceMetres Int
+  walkingMinutes Int
+  lat            Float
+  lng            Float
+  address        String?
+  lastUpdated    DateTime @default(now())
+  house          House            @relation(fields: [houseId], references: [id], onDelete: Cascade)
+  amenity        PreferredAmenity @relation(fields: [amenityId], references: [id])
+}
+
+model CommuteEstimate {
+  id               String   @id @default(uuid())
+  houseId          String
+  workplaceLabel   String
+  workplaceAddress String
+  mode             String
+  distanceMetres   Int
+  durationMinutes  Int
+  lastUpdated      DateTime @default(now())
+  house            House    @relation(fields: [houseId], references: [id], onDelete: Cascade)
 }

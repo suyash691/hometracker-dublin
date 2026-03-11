@@ -13,15 +13,28 @@ export class GoogleMapsProvider implements GeoProvider {
   }
 
   async nearbySearch(center: LatLng, query: string, radiusMetres: number): Promise<Place[]> {
-    // Use textsearch for everything — much more accurate than nearbysearch for both named stores and activity types
     const searchTerm = query.includes("=") ? query.split("=")[1] : query;
-    const res = await fetch(`${this.base}/place/textsearch/json?query=${encodeURIComponent(searchTerm)}&location=${center.lat},${center.lng}&radius=${radiusMetres}&key=${this.apiKey}`);
+
+    // Use nearbysearch for transit (finds physically closest stop) and generic types
+    // Use textsearch for named stores and specific activities (more accurate names)
+    const useNearby = ["bus_station", "transit_station", "train_station", "bus stop", "LUAS stop", "DART station"].some(t => searchTerm.toLowerCase().includes(t.toLowerCase()));
+
+    let url: string;
+    if (useNearby) {
+      // For transit: search by type to find physically closest stop
+      const type = searchTerm.toLowerCase().includes("bus") ? "bus_station" : searchTerm.toLowerCase().includes("dart") ? "train_station" : "transit_station";
+      url = `${this.base}/place/nearbysearch/json?location=${center.lat},${center.lng}&radius=${radiusMetres}&type=${type}&key=${this.apiKey}`;
+    } else {
+      url = `${this.base}/place/textsearch/json?query=${encodeURIComponent(searchTerm)}&location=${center.lat},${center.lng}&radius=${radiusMetres}&key=${this.apiKey}`;
+    }
+
+    const res = await fetch(url);
     const data = await res.json();
     return (data.results || []).slice(0, 5).map((r: Record<string, unknown>) => ({
       name: r.name as string,
       lat: (r.geometry as Record<string, Record<string, number>>).location.lat,
       lng: (r.geometry as Record<string, Record<string, number>>).location.lng,
-      address: r.formatted_address as string | undefined,
+      address: (r.formatted_address || r.vicinity) as string | undefined,
     }));
   }
 

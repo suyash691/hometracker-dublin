@@ -9,7 +9,8 @@ export class OsmProvider implements GeoProvider {
   private osrm = process.env.OSRM_URL || "https://router.project-osrm.org";
 
   async geocode(address: string): Promise<LatLng> {
-    const res = await fetch(`${this.nominatim}/search?q=${encodeURIComponent(address + ", Dublin, Ireland")}&format=json&limit=1`, { headers: { "User-Agent": UA } });
+    const suffix = /dublin|ireland/i.test(address) ? "" : ", Dublin, Ireland";
+    const res = await fetch(`${this.nominatim}/search?q=${encodeURIComponent(address + suffix)}&format=json&limit=1`, { headers: { "User-Agent": UA } });
     const data = await res.json();
     if (!data[0]) throw new Error(`Geocode failed for: ${address}`);
     return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };

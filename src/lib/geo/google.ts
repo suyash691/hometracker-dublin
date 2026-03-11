@@ -5,9 +5,10 @@ export class GoogleMapsProvider implements GeoProvider {
   private base = "https://maps.googleapis.com/maps/api";
 
   async geocode(address: string): Promise<LatLng> {
-    const res = await fetch(`${this.base}/geocode/json?address=${encodeURIComponent(address + ", Dublin, Ireland")}&key=${this.apiKey}`);
+    const suffix = /dublin|ireland/i.test(address) ? "" : ", Dublin, Ireland";
+    const res = await fetch(`${this.base}/geocode/json?address=${encodeURIComponent(address + suffix)}&key=${this.apiKey}`);
     const data = await res.json();
-    if (!data.results?.[0]) throw new Error(`Geocode failed for: ${address}`);
+    if (!data.results?.[0]) throw new Error(`Geocode failed for: ${address} (status: ${data.status}, suffix: "${suffix}")`);
     return data.results[0].geometry.location;
   }
 

@@ -34,51 +34,54 @@ export async function scrapeDaftListing(url: string): Promise<ScrapedListing> {
 }
 
 async function fetchViaApi(listingId: string, originalUrl: string): Promise<ScrapedListing> {
-  // Step 1: Hit the Daft.ie homepage first to get Cloudflare cookies
-  const session = await fetch("https://www.daft.ie/", {
-    headers: {
-      "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-      "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-    },
-    redirect: "follow",
-  });
-  // Extract any cookies from the response
-  const cookies = session.headers.get("set-cookie") || "";
+  // Use Daft's internal search API (same as daftlistings Python library)
+  // POST to gateway.daft.ie/api/v2/ads/listings with filters
+  console.log(`[scraper] Trying Daft gateway API for listing ${listingId}`);
 
-  // Step 2: Fetch the listing page with the cookies
-  const res = await fetch(originalUrl, {
+  const res = await fetch("https://gateway.daft.ie/api/v2/ads/listings", {
+    method: "POST",
     headers: {
-      "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-      "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-      "Accept-Language": "en-IE,en;q=0.9",
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36",
+      "Content-Type": "application/json",
+      "brand": "daft",
+      "platform": "web",
+      "Origin": "https://www.daft.ie",
       "Referer": "https://www.daft.ie/",
-      "Cookie": cookies,
-      "Sec-Fetch-Dest": "document", "Sec-Fetch-Mode": "navigate", "Sec-Fetch-Site": "same-origin",
     },
-    redirect: "follow",
+    body: JSON.stringify({
+      section: "residential-for-sale",
+      filters: [{ name: "adId", values: [listingId] }],
+      paging: { from: "0", pagesize: "1" },
+    }),
   });
 
-  if (!res.ok) throw new Error(`Daft fetch returned ${res.status}`);
+  if (!res.ok) throw new Error(`Daft gateway API returned ${res.status}`);
+  const data = await res.json();
+  const listings = data.listings || [];
+  if (listings.length === 0) throw new Error("Listing not found in API response");
 
-  const html = await res.text();
-  const $ = cheerio.load(html);
-  const nextData = $('script#__NEXT_DATA__').text();
-  if (!nextData) throw new Error("No __NEXT_DATA__ found");
+  const listing = listings[0].listing;
+  const priceStr = listing.price || "";
+  const priceMatch = priceStr.match(/[\d,]+/);
+  const price = priceMatch ? parseInt(priceMatch[0].replace(/,/g, ""), 10) : undefined;
 
-  const json = JSON.parse(nextData);
-  const listing = json.props?.pageProps?.listing;
-  if (!listing) throw new Error("No listing data in __NEXT_DATA__");
+  const imageUrls = (listing.media?.images || [])
+    .map((img: Record<string, string>) => img.size720x480 || img.size600x600 || img.size400x300 || img.url || "")
+    .filter((u: string) => u.startsWith("http"))
+    .slice(0, 10);
 
   return {
     address: (listing.title || "").replace(/,?\s*Dublin\s*\d*,?\s*Ireland/i, "").trim(),
-    askingPrice: listing.price ? parseInt(String(listing.price).replace(/[^0-9]/g, ""), 10) : undefined,
-    bedrooms: listing.numBedrooms, bathrooms: listing.numBathrooms,
-    ber: listing.ber?.rating, propertyType: inferPropertyType(listing.propertyType || listing.category || ""),
-    squareMetres: listing.floorArea?.value ? parseFloat(listing.floorArea.value) : undefined,
+    askingPrice: price && price > 0 ? price : undefined,
+    bedrooms: listing.numBedrooms ? parseInt(String(listing.numBedrooms).match(/\d+/)?.[0] || "0", 10) || undefined : undefined,
+    bathrooms: listing.numBathrooms ? parseInt(String(listing.numBathrooms).match(/\d+/)?.[0] || "0", 10) || undefined : undefined,
+    ber: listing.ber?.rating,
+    propertyType: inferPropertyType(listing.propertyType || listing.category || ""),
+    squareMetres: listing.floorArea?.unit === "METRES_SQUARED" ? parseFloat(listing.floorArea.value) : undefined,
     neighbourhood: inferNeighbourhood(listing.title || ""),
     eircode: (listing.title || "").match(/([A-Z]\d{2}\s?[A-Z0-9]{4})/i)?.[1],
     listingUrl: originalUrl,
-    images: await downloadImages((listing.media?.images || []).map((i: Record<string, string>) => i.size720x480 || i.url || "").filter(Boolean).slice(0, 10)),
+    images: await downloadImages(imageUrls),
   };
 }
 

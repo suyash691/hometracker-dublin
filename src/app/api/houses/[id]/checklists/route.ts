@@ -17,11 +17,16 @@ export async function POST(req: NextRequest, ctx: Ctx) {
   } else if (body.items) {
     items = body.items;
   } else {
-    // Use default template
+    // Use default template, or fall back to built-in checklist
     const def = await prisma.checklistTemplate.findFirst({ where: { isDefault: true } });
-    if (!def) return NextResponse.json({ error: "No default template" }, { status: 400 });
-    const names: string[] = JSON.parse(def.items);
-    items = names.map((name) => ({ name, checked: false, notes: "" }));
+    if (def) {
+      const names: string[] = JSON.parse(def.items);
+      items = names.map((name) => ({ name, checked: false, notes: "" }));
+    } else {
+      // No template seeded — use built-in default checklist
+      const { DEFAULT_CHECKLIST_ITEMS } = await import("@/lib/default-checklist");
+      items = DEFAULT_CHECKLIST_ITEMS.map((name) => ({ name, checked: false, notes: "" }));
+    }
   }
 
   const checklist = await prisma.viewingChecklist.create({

@@ -7,7 +7,7 @@ import { HOUSE_STATUSES, PROPERTY_TYPES } from "@/lib/types";
 export default function HousesPage() {
   const [houses, setHouses] = useState<House[]>([]);
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ address: "", askingPrice: "", bedrooms: "", bathrooms: "", propertyType: "house", ber: "", neighbourhood: "", listingUrl: "", status: "wishlist" });
+  const [form, setForm] = useState({ address: "", askingPrice: "", bedrooms: "", bathrooms: "", propertyType: "house", ber: "", neighbourhood: "", listingUrl: "", viewingDate: "", status: "wishlist" });
 
   const load = () => api.houses.list().then(setHouses);
   useEffect(() => { load(); }, []);
@@ -23,6 +23,7 @@ export default function HousesPage() {
       ber: form.ber || undefined,
       neighbourhood: form.neighbourhood || undefined,
       listingUrl: form.listingUrl || undefined,
+      viewingDate: form.viewingDate || undefined,
       status: form.status,
     });
     setForm({ address: "", askingPrice: "", bedrooms: "", bathrooms: "", propertyType: "house", ber: "", neighbourhood: "", listingUrl: "", status: "wishlist" });
@@ -52,6 +53,7 @@ export default function HousesPage() {
             <input placeholder="BER Rating" value={form.ber} onChange={(e) => setForm({ ...form, ber: e.target.value })} className="border rounded px-3 py-2 text-sm" />
             <input placeholder="Neighbourhood" value={form.neighbourhood} onChange={(e) => setForm({ ...form, neighbourhood: e.target.value })} className="border rounded px-3 py-2 text-sm" />
             <input placeholder="Daft.ie / MyHome.ie URL" value={form.listingUrl} onChange={(e) => setForm({ ...form, listingUrl: e.target.value })} className="border rounded px-3 py-2 text-sm" />
+            <input type="datetime-local" value={form.viewingDate} onChange={(e) => setForm({ ...form, viewingDate: e.target.value })} className="border rounded px-3 py-2 text-sm" title="Viewing date/time" />
             <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} className="border rounded px-3 py-2 text-sm">
               {HOUSE_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g, " ")}</option>)}
             </select>

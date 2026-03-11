@@ -116,6 +116,10 @@ export default function HouseDetail({ params }: { params: Promise<{ id: string }
           {!editNotes ? (<>
             {(pros.length > 0 || cons.length > 0) && <div className="grid grid-cols-2 gap-4"><div className="bg-green-50 rounded-lg p-3"><h3 className="font-semibold text-green-800 text-sm mb-2">Pros</h3>{pros.map((p, i) => <div key={i} className="text-sm">✓ {p}</div>)}</div><div className="bg-red-50 rounded-lg p-3"><h3 className="font-semibold text-red-800 text-sm mb-2">Cons</h3>{cons.map((c, i) => <div key={i} className="text-sm">✗ {c}</div>)}</div></div>}
             {house.notes && <div className="bg-white rounded-lg p-4 border"><h3 className="font-semibold text-sm mb-2">Notes</h3><p className="text-sm text-gray-700 whitespace-pre-wrap">{house.notes}</p></div>}
+            <div className="flex items-center gap-3 text-sm">
+              <label className="text-gray-500">Viewing date:</label>
+              <input type="datetime-local" value={house.viewingDate ? new Date(house.viewingDate).toISOString().slice(0, 16) : ""} onChange={async (e) => { await api.houses.update(id, { viewingDate: e.target.value || undefined }); load(); }} className="border rounded px-2 py-1 text-sm" />
+            </div>
             <button onClick={() => setEditNotes(true)} className="text-sm text-emerald-600 hover:underline">Edit notes / pros / cons</button>
           </>) : (
             <div className="space-y-3 bg-white p-4 rounded-lg border">

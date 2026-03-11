@@ -64,13 +64,14 @@ describe("POST /api/houses/[id]/checklists", () => {
     expect(items).toHaveLength(2);
   });
 
-  it("returns 400 when no default template exists", async () => {
+  it("falls back to built-in checklist when no default template exists", async () => {
     (prisma.checklistTemplate.findFirst as jest.Mock).mockResolvedValue(null);
     const req = new NextRequest("http://localhost", {
       method: "POST", body: JSON.stringify({}),
     });
     const res = await POST(req, ctx("h1"));
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(201);
+    expect(prisma.viewingChecklist.create).toHaveBeenCalled();
   });
 });
 

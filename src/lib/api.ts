@@ -24,6 +24,7 @@ export const api = {
   bids: {
     list: (hid: string) => request<Bid[]>(`/houses/${hid}/bids`),
     create: (hid: string, d: Partial<Bid>) => request<Bid>(`/houses/${hid}/bids`, { method: "POST", body: JSON.stringify(d) }),
+    delete: (hid: string, bidId: string) => request(`/houses/${hid}/bids`, { method: "DELETE", body: JSON.stringify({ bidId }) }),
     sync: (hid: string) => request(`/houses/${hid}/bids/sync`, { method: "POST" }),
   },
   actions: {

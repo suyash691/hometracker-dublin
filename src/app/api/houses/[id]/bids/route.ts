@@ -40,3 +40,25 @@ export async function POST(req: NextRequest, ctx: Ctx) {
   }
   return NextResponse.json(bid, { status: 201 });
 }
+
+export async function DELETE(req: NextRequest, ctx: Ctx) {
+  const { id } = await ctx.params;
+  const { bidId } = await req.json();
+  if (!bidId) return NextResponse.json({ error: "bidId required" }, { status: 400 });
+  await prisma.bidHistory.delete({ where: { id: bidId } });
+  // Recalculate currentBid
+  const highest = await prisma.bidHistory.findFirst({ where: { houseId: id }, orderBy: { amount: "desc" } });
+  await prisma.house.update({ where: { id }, data: { currentBid: highest?.amount || null } });
+  // Recalculate total cost if exists
+  if (highest) {
+    const tc = await prisma.totalCostEstimate.findUnique({ where: { houseId: id } });
+    if (tc) {
+      const house = await prisma.house.findUnique({ where: { id } });
+      const price = highest.amount;
+      const { calculateStampDuty } = await import("@/lib/stamp-duty");
+      const { stampDuty } = calculateStampDuty(price, house?.isNewBuild ?? false);
+      await prisma.totalCostEstimate.update({ where: { houseId: id }, data: { purchasePrice: price, deposit: Math.round(price * 0.1), stampDuty } });
+    }
+  }
+  return NextResponse.json({ ok: true });
+}

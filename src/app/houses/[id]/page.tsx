@@ -144,7 +144,7 @@ export default function HouseDetail({ params }: { params: Promise<{ id: string }
             </form>
             {house.offrUrl && <button onClick={syncBids} disabled={syncing} className="bg-orange-500 text-white px-4 py-2 rounded text-sm disabled:opacity-50">{syncing ? "Syncing..." : "Sync Offr.io"}</button>}
           </div>
-          {house.bids.map((b: Bid) => <div key={b.id} className={`p-3 rounded-lg border ${b.isOurs ? "bg-emerald-50 border-emerald-200" : "bg-white"}`}><div className="flex justify-between"><span className="font-semibold">{f(b.amount)}</span><span className="text-sm text-gray-500">{new Date(b.bidDate).toLocaleDateString("en-IE")}</span></div><div className="text-xs text-gray-500">{b.isOurs ? "Our bid" : "Competing"}{b.source === "offr_sync" && " (Offr.io)"}{b.notes && ` · ${b.notes}`}</div></div>)}
+          {house.bids.map((b: Bid) => <div key={b.id} className={`p-3 rounded-lg border ${b.isOurs ? "bg-emerald-50 border-emerald-200" : "bg-white"}`}><div className="flex justify-between"><span className="font-semibold">{f(b.amount)}</span><div className="flex items-center gap-2"><span className="text-sm text-gray-500">{new Date(b.bidDate).toLocaleDateString("en-IE")}</span><button onClick={() => { if (confirm("Delete this bid?")) api.bids.delete(id, b.id).then(load); }} className="text-red-400 hover:text-red-600 text-xs">✕</button></div></div><div className="text-xs text-gray-500">{b.isOurs ? "Our bid" : "Competing"}{b.source === "offr_sync" && " (Offr.io)"}{b.notes && ` · ${b.notes}`}</div></div>)}
         </div>
       )}
 

@@ -30,13 +30,15 @@ db.ts ← all route handlers
   ├── activity.ts
   ├── auth.ts
   ├── status-triggers.ts (sale_agreed/closed/dropped cascades)
-  │     ├── schemes.ts (milestones, checklists)
+  │     ├── constants/conveyancing.ts (18 milestones)
   │     ├── stamp-duty.ts
   │     ├── default-snags.ts
   │     └── default-post-completion.ts
   ├── stamp-duty.ts
   ├── central-bank.ts
-  ├── schemes.ts (HTB/FHS/LAHL + constants)
+  ├── schemes.ts (HTB/FHS/LAHL only)
+  ├── constants/omc.ts (14-item OMC checklist)
+  ├── constants/seai.ts (9 SEAI grants)
   ├── ber-calculator.ts
   ├── planning.ts
   ├── estimator.ts (Ollama/Claude)
@@ -78,10 +80,10 @@ housetrackingapp/
 │   │   ├── login/page.tsx
 │   │   └── api/                    # 57 route files
 │   ├── components/house-detail/    # 6 extracted components
-│   └── lib/                        # 25 modules (including geo/)
+│   └── lib/                        # 28 modules (including geo/ and constants/)
 ├── data/
 │   ├── hometracker.db
 │   ├── media/
 │   └── ppr/
-└── __tests__/                      # 48 suites, 229 tests
+└── __tests__/                      # 83 suites, 337 tests
 ```

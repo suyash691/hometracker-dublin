@@ -69,9 +69,9 @@ A self-hosted web app for a couple buying a house in Dublin. Track viewings, bid
 | API Routes | 57 |
 | Pages | 9 |
 | Components | 6 |
-| Lib Modules | 25 |
-| Test Suites | 48 |
-| Tests | 229 |
+| Lib Modules | 28 |
+| Test Suites | 83 |
+| Tests | 337 |
 | Spec Modules | 31 (merged 32+33 into 31) (all implemented) |
 | Design Docs | 9 (merged 10 into 09) |
 

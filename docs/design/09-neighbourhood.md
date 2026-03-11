@@ -1,8 +1,20 @@
 # Design 09: Neighbourhood Intelligence
 
-> ⚠️ **Note:** The GeoProvider interface in this doc has been superseded by Design 10 (multi-modal routing). The current interface uses `route(from, to, mode)` instead of `walkingRoute(from, to)`.
-
 > Parent: [DESIGN.md](../../DESIGN.md)
+
+## GeoProvider Interface (current)
+
+```typescript
+interface GeoProvider {
+  geocode(address: string): Promise<LatLng>;
+  nearbySearch(center: LatLng, query: string, radiusMetres: number): Promise<Place[]>;
+  route(from: LatLng, to: LatLng, mode: TransportMode): Promise<Route>;
+}
+type TransportMode = "walking" | "cycling" | "driving" | "transit";
+interface Route { distanceMetres: number; durationMinutes: number; summary?: string; }
+```
+
+See `src/lib/geo/` for implementations (OsmProvider, GoogleMapsProvider) and `src/lib/neighbourhood.ts` for orchestration.
 
 ## New Prisma Models
 

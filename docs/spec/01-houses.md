@@ -55,7 +55,7 @@ The import scraper uses Daft's internal API which returns rich data:
 |-------|--------|-----------|---------|
 | `point.coordinates` | API | House.lat, House.lng | Neighbourhood (skips geocoding) |
 | `ber.epi` | API | House.berEpi | BER cost impact display |
-| `pricePerSqM` | API | House.pricePerSqm | House detail stats, PPR comparison |
-| `publishDate` | API | House.publishDate, House.daysOnMarket | Days on market indicator |
+| `pricePerSqM` | API | Computed at read time | House detail stats, PPR comparison |
+| `publishDate` | API | House.publishDate (daysOnMarket computed) | Days on market indicator |
 | `seller.name/branch/phone` | API | House.agentName/agentBranch/agentPhone | Agent info display, CommLog pre-fill |
 | `media.images[].floorPlan` | API | Media.type = "floorplan" | Separate floorplans from photos |

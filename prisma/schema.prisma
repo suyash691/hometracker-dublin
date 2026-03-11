@@ -26,9 +26,7 @@ model House {
   squareMetres  Float?
   lat           Float?
   lng           Float?
-  berEpi        String?   // e.g. "201.12 kWh/m2/yr"
-  pricePerSqm   Float?
-  daysOnMarket  Int?
+  berEpi        String?
   publishDate   DateTime?
   agentName     String?
   agentBranch   String?

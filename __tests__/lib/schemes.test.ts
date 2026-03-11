@@ -1,7 +1,10 @@
 /**
  * @jest-environment node
  */
-import { calculateHTB, calculateFHS, calculateLAHL, CONVEYANCING_MILESTONES, OMC_CHECKLIST, SEAI_GRANTS } from "@/lib/schemes";
+import { calculateHTB, calculateFHS, calculateLAHL } from "@/lib/schemes";
+import { CONVEYANCING_MILESTONES, } from "@/lib/constants/conveyancing";
+import { OMC_CHECKLIST } from "@/lib/constants/omc";
+import { SEAI_GRANTS } from "@/lib/constants/seai";
 
 describe("calculateHTB", () => {
   it("eligible FTB new build → capped at €30k", () => {

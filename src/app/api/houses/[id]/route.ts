@@ -26,7 +26,10 @@ export async function GET(_req: NextRequest, ctx: Ctx) {
     },
   });
   if (!house) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  return NextResponse.json(house);
+  // Compute derived fields at read time (not stored — they'd go stale)
+  const daysOnMarket = house.publishDate ? Math.floor((Date.now() - new Date(house.publishDate).getTime()) / 86400000) : null;
+  const pricePerSqm = house.askingPrice && house.squareMetres ? Math.round(house.askingPrice / house.squareMetres) : null;
+  return NextResponse.json({ ...house, daysOnMarket, pricePerSqm });
 }
 
 export async function PUT(req: NextRequest, ctx: Ctx) {

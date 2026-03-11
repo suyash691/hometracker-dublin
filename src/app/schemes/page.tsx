@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { api, type SchemeEligibility, type House, type BorrowingLimits } from "@/lib/api";
-import { SEAI_GRANTS } from "@/lib/schemes";
+import { SEAI_GRANTS } from "@/lib/constants/seai";
 
 const SCHEME_META: Record<string, { icon: string; name: string; desc: string; link: string }> = {
   htb: { icon: "🏠", name: "Help to Buy (HTB)", desc: "Tax refund up to €30,000 on new builds for first-time buyers", link: "https://www.revenue.ie/en/property/help-to-buy-incentive/" },

@@ -14,6 +14,7 @@ function mockModel() {
 }
 
 export const prisma = {
+  $transaction: jest.fn().mockImplementation((fn: (tx: typeof prisma) => Promise<unknown>) => fn(prisma)),
   house: mockModel(),
   media: mockModel(),
   bidHistory: mockModel(),

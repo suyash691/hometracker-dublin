@@ -9,7 +9,7 @@ const RETROFIT: Record<string, [number, number]> = {
   D1: [25000,40000], D2: [30000,45000],
   E1: [35000,55000], E2: [40000,65000], F: [50000,75000], G: [55000,80000],
 };
-// SEAI max grant amounts by BER rating (derived from SEAI_GRANTS in schemes.ts — update if grant amounts change)
+// SEAI max grant amounts by BER rating (derived from SEAI_GRANTS in constants/seai.ts — update if grant amounts change)
 const SEAI_MAX: Record<string, number> = {
   A1: 0, A2: 0, A3: 0, B1: 2100, B2: 0, B3: 5000,
   C1: 15000, C2: 15000, C3: 20000, D1: 25000, D2: 25000,

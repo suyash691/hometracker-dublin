@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { OMC_CHECKLIST } from "@/lib/schemes";
+import { OMC_CHECKLIST } from "@/lib/constants/omc";
 import { NextRequest, NextResponse } from "next/server";
 
 type Ctx = { params: Promise<{ id: string }> };

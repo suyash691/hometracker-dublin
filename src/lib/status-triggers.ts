@@ -1,5 +1,5 @@
 import { prisma } from "./db";
-import { CONVEYANCING_MILESTONES } from "./schemes";
+import { CONVEYANCING_MILESTONES } from "./constants/conveyancing";
 import { calculateStampDuty } from "./stamp-duty";
 
 /** Called when a house moves to sale_agreed. Creates conveyancing tracker, total cost, action items, and new-build extras. */

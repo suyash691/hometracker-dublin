@@ -7,7 +7,7 @@ jest.mock("@/lib/scraper", () => ({
   scrapeDaftListing: jest.fn().mockResolvedValue({
     address: "42 Phibsborough Rd", askingPrice: 425000, bedrooms: 3, bathrooms: 1,
     propertyType: "terraced", ber: "C2", squareMetres: 95, neighbourhood: "Phibsborough",
-    eircode: "D07", listingUrl: "https://daft.ie/123", images: ["/data/media/img1.jpg"], floorplanImages: [],
+    eircode: "D07", listingUrl: "https://daft.ie/123", images: ["/data/media/img1.jpg"], floorplanImages: [], lat: 53.3, lng: -6.25, berEpi: "201 kWh",
   }),
 }));
 jest.mock("@/lib/activity", () => ({ logActivity: jest.fn() }));

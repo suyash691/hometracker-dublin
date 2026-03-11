@@ -7,11 +7,9 @@ import { randomUUID } from "crypto";
 export interface ScrapedListing {
   address: string; askingPrice?: number; bedrooms?: number; bathrooms?: number;
   propertyType?: string; ber?: string; squareMetres?: number; neighbourhood?: string;
-  eircode?: string; listingUrl: string; images: string[];
-  // New fields from Daft API
-  lat?: number; lng?: number; berEpi?: string; pricePerSqm?: number;
+  eircode?: string; listingUrl: string; images: string[]; floorplanImages: string[];
+  lat?: number; lng?: number; berEpi?: string;
   publishDate?: Date; agentName?: string; agentBranch?: string; agentPhone?: string;
-  floorplanImages: string[];
 }
 
 // Extract listing ID from Daft URL: /for-sale/.../6515784 → 6515784
@@ -85,11 +83,9 @@ async function fetchViaApi(listingId: string, originalUrl: string): Promise<Scra
 
   // Calculate days on market
   const pubDate = listing.publishDate ? new Date(listing.publishDate) : undefined;
-  const daysOnMarket = pubDate ? Math.floor((Date.now() - pubDate.getTime()) / 86400000) : undefined;
 
   // Extract price per sqm
   const ppsqm = listing.pricePerSqM?.match(/[\d,]+/);
-  const pricePerSqm = ppsqm ? parseInt(ppsqm[0].replace(/,/g, ""), 10) : undefined;
 
   return {
     address: (listing.title || "").replace(/,?\s*Dublin\s*\d*,?\s*Ireland/i, "").trim(),
@@ -107,7 +103,6 @@ async function fetchViaApi(listingId: string, originalUrl: string): Promise<Scra
     // New fields
     lat, lng,
     berEpi: listing.ber?.epi,
-    pricePerSqm,
     publishDate: pubDate,
     agentName: listing.seller?.name,
     agentBranch: listing.seller?.branch,

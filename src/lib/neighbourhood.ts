@@ -1,14 +1,14 @@
 import { prisma } from "./db";
-import { getGeoProvider, type LatLng, type TransportMode } from "./geo";
+import { getGeoProvider, type LatLng, type TransportMode, type GeoProvider } from "./geo";
 
 const COMMUTE_MODES: TransportMode[] = ["walking", "cycling", "driving", "transit"];
 const TRANSIT_AMENITY_NAMES = ["Bus Stop", "LUAS Stop", "DART Station"];
 
-export async function refreshNeighbourhood(houseId: string) {
+export async function refreshNeighbourhood(houseId: string, injectedGeo?: GeoProvider) {
   const house = await prisma.house.findUnique({ where: { id: houseId } });
   if (!house) throw new Error("House not found");
 
-  const geo = getGeoProvider();
+  const geo = injectedGeo ?? getGeoProvider();
   // Use stored coordinates if available (from Daft API), otherwise geocode
   const houseLoc = (house.lat && house.lng)
     ? { lat: house.lat, lng: house.lng }

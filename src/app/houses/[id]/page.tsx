@@ -192,16 +192,16 @@ export default function HouseDetail({ params }: { params: Promise<{ id: string }
                 <div className="border-t my-2" />
                 <Row label="Deposit (10%)" value={f(totalCost.deposit)} />
                 <Row label="Stamp Duty" value={f(totalCost.stampDuty)} />
-                <Row label="Legal Fees" value={f(totalCost.legalFees)} />
-                <Row label="Land Registry" value={f(totalCost.landRegistryFees)} />
-                <Row label="Survey" value={f(totalCost.surveyFee)} />
-                <Row label="Valuation" value={f(totalCost.valuationFee)} />
+                <EditableRow label="Legal Fees" value={totalCost.legalFees} defaultVal={2500} field="legalFees" houseId={id} reload={load} />
+                <EditableRow label="Land Registry" value={totalCost.landRegistryFees} defaultVal={700} field="landRegistryFees" houseId={id} reload={load} />
+                <EditableRow label="Survey" value={totalCost.surveyFee} defaultVal={500} field="surveyFee" houseId={id} reload={load} />
+                <EditableRow label="Valuation" value={totalCost.valuationFee} defaultVal={185} field="valuationFee" houseId={id} reload={load} />
                 <div className="border-t my-2" />
                 <Row label="💰 Cash Needed at Closing" value={f(totalCost.cashNeededAtClosing)} bold />
                 <div className="border-t my-2" />
-                <Row label="Mortgage Protection" value={f(totalCost.mortgageProtection)} />
-                <Row label="Home Insurance" value={f(totalCost.homeInsurance)} />
-                <Row label="Moving Costs" value={f(totalCost.movingCosts)} />
+                <EditableRow label="Mortgage Protection (annual)" value={totalCost.mortgageProtection} defaultVal={500} field="mortgageProtection" houseId={id} reload={load} />
+                <EditableRow label="Home Insurance (annual)" value={totalCost.homeInsurance} defaultVal={500} field="homeInsurance" houseId={id} reload={load} />
+                <EditableRow label="Moving Costs" value={totalCost.movingCosts} defaultVal={800} field="movingCosts" houseId={id} reload={load} />
                 <div className="border-t my-2" />
                 <Row label="📋 Total Purchase Cost" value={f(totalCost.totalPurchaseCost)} bold />
 
@@ -355,4 +355,35 @@ function SC({ label, value }: { label: string; value: string }) {
 }
 function Row({ label, value, bold }: { label: string; value: string; bold?: boolean }) {
   return <div className={`flex justify-between ${bold ? "font-semibold" : ""}`}><span>{label}</span><span>{value}</span></div>;
+}
+
+function EditableRow({ label, value, defaultVal, field, houseId, reload }: { label: string; value: number; defaultVal: number; field: string; houseId: string; reload: () => void }) {
+  const [editing, setEditing] = useState(false);
+  const [val, setVal] = useState(String(value));
+  const isDefault = value === defaultVal;
+  const save = async () => {
+    await api.totalCost.update(houseId, { [field]: Number(val) || 0 });
+    setEditing(false);
+    reload();
+  };
+  if (editing) {
+    return (
+      <div className="flex justify-between items-center">
+        <span className="text-sm">{label}</span>
+        <span className="flex items-center gap-1">
+          <span className="text-sm">€</span>
+          <input type="number" value={val} onChange={e => setVal(e.target.value)} onBlur={save} onKeyDown={e => e.key === "Enter" && save()} className="border rounded px-1 py-0.5 text-sm w-20 text-right" autoFocus />
+        </span>
+      </div>
+    );
+  }
+  return (
+    <div className="flex justify-between items-center cursor-pointer hover:bg-gray-50 -mx-1 px-1 rounded" onClick={() => { setVal(String(value)); setEditing(true); }}>
+      <span className="text-sm">{label}</span>
+      <span className="text-sm">
+        €{value.toLocaleString()}
+        {isDefault && <span className="text-xs text-orange-400 ml-1" title="Default estimate — click to edit">est.</span>}
+      </span>
+    </div>
+  );
 }

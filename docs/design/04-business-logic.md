@@ -43,3 +43,17 @@ function checkExemption(type: string, sizeSqm: number, gardenSqm: number) {
 | viewingDate passes | Journal gut-check prompt |
 | CommLog.responseNeeded + 5 days | Overdue alert in activity feed |
 | BiddingStrategy.hardCeiling reached | Walk-away prompt |
+
+## Total Cost — Purchase Price Selection
+
+```typescript
+// Used by: sale-agreed trigger, total-cost API, bid creation
+function getEffectivePrice(house: { askingPrice?: number; currentBid?: number }): number {
+  return house.currentBid ?? house.askingPrice ?? 0;
+}
+```
+
+When a bid is placed (POST /api/houses/:id/bids), if a TotalCostEstimate exists, auto-recalculate:
+```
+new bid → update house.currentBid → recalculate TotalCostEstimate.purchasePrice, deposit, stampDuty
+```

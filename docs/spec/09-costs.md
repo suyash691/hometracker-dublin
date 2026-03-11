@@ -12,9 +12,23 @@
 
 New builds: calculated on VAT-exclusive price (÷1.135).
 
+## Purchase Price Logic
+
+The total cost calculator uses the **most realistic purchase price**, not just the asking price:
+
+| House Status | Price Used | Rationale |
+|-------------|-----------|-----------|
+| wishlist / viewing_scheduled / viewed | askingPrice | No bids yet — asking is the best estimate |
+| bidding | max(currentBid, askingPrice) | Current bid is the likely price; use whichever is higher |
+| sale_agreed+ | currentBid or askingPrice | The agreed price (currentBid reflects what was accepted) |
+
+When the total cost estimate is auto-created (on sale_agreed trigger) or manually initialized, it uses `house.currentBid ?? house.askingPrice` as the purchase price. The user can always override.
+
+When a new bid is placed, the total cost estimate is **auto-recalculated** if one exists — stamp duty and deposit update to reflect the new likely price.
+
 ## Entity: TotalCostEstimate
 
-purchasePrice, deposit (10%), stampDuty (auto), legalFees (€2.5k), landRegistryFees (€700), surveyFee (€500), valuationFee (€185), mortgageProtection, homeInsurance, movingCosts (€800), otherCosts. Computed: totalUpfront, cashNeededAtClosing.
+purchasePrice (from bid or asking), deposit (10%), stampDuty (auto), legalFees (€2.5k), landRegistryFees (€700), surveyFee (€500), valuationFee (€185), mortgageProtection, homeInsurance, movingCosts (€800), otherCosts. Computed at read time: totalUpfront, cashNeededAtClosing.
 
 ## Funding Stack
 

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import Link from "next/link";
+import UserBadge from "@/components/UserBadge";
 import "./globals.css";
 
 const geist = Geist({ subsets: ["latin"] });
@@ -27,7 +28,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={`${geist.className} bg-gray-50 min-h-screen`}>
         <nav className="bg-white border-b px-4 py-3">
           <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
             <span className="font-bold text-lg text-emerald-700">🏠 HomeTracker</span>
+            <UserBadge />
+          </div>
           </div>
           <div className="flex gap-3 mt-2 overflow-x-auto pb-1 -mx-1 px-1">
             {NAV.map(n => (

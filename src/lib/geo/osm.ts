@@ -42,13 +42,18 @@ export class OsmProvider implements GeoProvider {
   }
 
   async route(from: LatLng, to: LatLng, mode: TransportMode): Promise<Route> {
-    const profile = { walking: "foot", cycling: "bicycle", driving: "car", transit: "foot" }[mode];
+    const speeds: Record<TransportMode, number> = { walking: 5, cycling: 15, driving: 30, transit: 20 }; // km/h
     try {
-      const res = await fetch(`${this.osrm}/route/v1/${profile}/${from.lng},${from.lat};${to.lng},${to.lat}?overview=false`);
+      // Public OSRM only has foot profile — use it for distance, then adjust duration by mode speed
+      const res = await fetch(`${this.osrm}/route/v1/foot/${from.lng},${from.lat};${to.lng},${to.lat}?overview=false`);
       const data = await res.json();
       if (data.routes?.[0]) {
-        if (mode === "transit") return this.estimateTransit(data.routes[0].distance);
-        return { distanceMetres: Math.round(data.routes[0].distance), durationMinutes: Math.round(data.routes[0].duration / 60) };
+        const dist = data.routes[0].distance;
+        if (mode === "walking") return { distanceMetres: Math.round(dist), durationMinutes: Math.round(data.routes[0].duration / 60) };
+        if (mode === "transit") return this.estimateTransit(dist);
+        // For cycling/driving: use walking distance (route shape) but mode-appropriate speed
+        const routeDist = Math.round(mode === "driving" ? dist * 1.1 : dist); // driving routes slightly longer
+        return { distanceMetres: routeDist, durationMinutes: Math.round(routeDist / (speeds[mode] * 1000 / 60)) };
       }
     } catch { /* fallback */ }
     return this.fallback(from, to, mode);

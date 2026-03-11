@@ -24,10 +24,19 @@ export async function POST(req: NextRequest, ctx: Ctx) {
     orderBy: { amount: "desc" },
   });
   if (highest) {
-    await prisma.house.update({
-      where: { id },
-      data: { currentBid: highest.amount },
-    });
+    await prisma.house.update({ where: { id }, data: { currentBid: highest.amount } });
+    // Auto-recalculate total cost if one exists
+    const tc = await prisma.totalCostEstimate.findUnique({ where: { houseId: id } });
+    if (tc) {
+      const house = await prisma.house.findUnique({ where: { id } });
+      const price = highest.amount;
+      const { calculateStampDuty } = await import("@/lib/stamp-duty");
+      const { stampDuty } = calculateStampDuty(price, house?.isNewBuild ?? false);
+      await prisma.totalCostEstimate.update({
+        where: { houseId: id },
+        data: { purchasePrice: price, deposit: Math.round(price * 0.1), stampDuty },
+      });
+    }
   }
   return NextResponse.json(bid, { status: 201 });
 }

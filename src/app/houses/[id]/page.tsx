@@ -59,7 +59,7 @@ export default function HouseDetail({ params }: { params: Promise<{ id: string }
   const createChecklist = async () => { await api.checklists.create(id); load(); };
   const toggleCL = async (cid: string, items: ChecklistItem[], idx: number) => { const u = [...items]; u[idx] = { ...u[idx], checked: !u[idx].checked }; await api.checklists.update(id, cid, { items: u }); load(); };
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => { if (!e.target.files) return; for (const f of Array.from(e.target.files)) await api.media.upload(id, f, f.name.toLowerCase().includes("floor") ? "floorplan" : "photo"); load(); e.target.value = ""; };
-  const initTotalCost = async () => { if (!house.askingPrice) return; await api.totalCost.update(id, { purchasePrice: house.askingPrice }); load(); };
+  const initTotalCost = async () => { const price = house.currentBid || house.askingPrice; if (!price) return; await api.totalCost.update(id, { purchasePrice: price }); load(); };
   const initConv = async () => { await api.conveyancing.create(id); load(); };
   const updateMilestone = async (m: Milestone, status: string) => { await api.conveyancing.updateMilestone(id, m.id, { status }); load(); };
 
@@ -186,6 +186,9 @@ export default function HouseDetail({ params }: { params: Promise<{ id: string }
               <h3 className="font-semibold mb-3">Total Cost of Purchase</h3>
               <div className="space-y-1 text-sm">
                 <Row label="Purchase Price" value={f(totalCost.purchasePrice)} bold />
+                {house.currentBid && house.askingPrice && house.currentBid !== house.askingPrice && (
+                  <div className="text-xs text-gray-400">Based on current bid (asking was {f(house.askingPrice)})</div>
+                )}
                 <div className="border-t my-2" />
                 <Row label="Deposit (10%)" value={f(totalCost.deposit)} />
                 <Row label="Stamp Duty" value={f(totalCost.stampDuty)} />
@@ -193,11 +196,28 @@ export default function HouseDetail({ params }: { params: Promise<{ id: string }
                 <Row label="Land Registry" value={f(totalCost.landRegistryFees)} />
                 <Row label="Survey" value={f(totalCost.surveyFee)} />
                 <Row label="Valuation" value={f(totalCost.valuationFee)} />
+                <div className="border-t my-2" />
+                <Row label="💰 Cash Needed at Closing" value={f(totalCost.cashNeededAtClosing)} bold />
+                <div className="border-t my-2" />
                 <Row label="Mortgage Protection" value={f(totalCost.mortgageProtection)} />
                 <Row label="Home Insurance" value={f(totalCost.homeInsurance)} />
                 <Row label="Moving Costs" value={f(totalCost.movingCosts)} />
                 <div className="border-t my-2" />
-                <Row label="Cash Needed at Closing" value={f(totalCost.cashNeededAtClosing || (totalCost.deposit + totalCost.stampDuty + totalCost.legalFees + totalCost.landRegistryFees + totalCost.surveyFee + totalCost.valuationFee))} bold />
+                <Row label="📋 Total Purchase Cost" value={f(totalCost.totalPurchaseCost)} bold />
+
+                {/* Renovation + True All-In Cost */}
+                {(((totalCost.renovationHigh ?? 0) > 0) || (totalCost.seaiGrants ?? 0) > 0) && (<>
+                  <div className="border-t my-2" />
+                  <Row label="Renovation Estimate" value={`${f(totalCost.renovationLow)} – ${f(totalCost.renovationHigh)}`} />
+                  {(totalCost.seaiGrants ?? 0) > 0 && <Row label="SEAI Grants Available" value={`-${f(totalCost.seaiGrants)}`} />}
+                  <div className="border-t my-2" />
+                  <div className="bg-emerald-50 rounded p-2">
+                    <Row label="🏠 True All-In Cost" value={`${f(totalCost.trueAllInLow)} – ${f(totalCost.trueAllInHigh)}`} bold />
+                  </div>
+                </>)}
+                {((totalCost.renovationHigh ?? 0) === 0) && (
+                  <div className="text-xs text-gray-400 mt-2">Add renovation estimates on the Estimates tab to see the true all-in cost.</div>
+                )}
               </div>
             </div>
           )}

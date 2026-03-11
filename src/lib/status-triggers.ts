@@ -12,12 +12,13 @@ export async function handleSaleAgreed(houseId: string) {
   });
 
   const house = await prisma.house.findUnique({ where: { id: houseId } });
-  if (house?.askingPrice) {
-    const { stampDuty } = calculateStampDuty(house.askingPrice, house.isNewBuild);
+  if (house?.askingPrice || house?.currentBid) {
+    const price = house.currentBid ?? house.askingPrice!;
+    const { stampDuty } = calculateStampDuty(price, house.isNewBuild);
     await prisma.totalCostEstimate.upsert({
       where: { houseId },
       update: {},
-      create: { houseId, purchasePrice: house.askingPrice, deposit: Math.round(house.askingPrice * 0.1), stampDuty },
+      create: { houseId, purchasePrice: price, deposit: Math.round(price * 0.1), stampDuty },
     });
   }
 

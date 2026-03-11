@@ -24,6 +24,15 @@ model House {
   ber           String?
   isNewBuild    Boolean  @default(false)
   squareMetres  Float?
+  lat           Float?
+  lng           Float?
+  berEpi        String?   // e.g. "201.12 kWh/m2/yr"
+  pricePerSqm   Float?
+  daysOnMarket  Int?
+  publishDate   DateTime?
+  agentName     String?
+  agentBranch   String?
+  agentPhone    String?
   notes         String?
   pros          String?
   cons          String?

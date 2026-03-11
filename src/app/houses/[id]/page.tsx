@@ -79,7 +79,14 @@ export default function HouseDetail({ params }: { params: Promise<{ id: string }
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <SC label="Asking" value={f(house.askingPrice)} /><SC label="Current Bid" value={f(house.currentBid)} /><SC label="Beds/Baths" value={`${house.bedrooms || "?"} / ${house.bathrooms || "?"}`} /><SC label="BER" value={house.ber || "—"} /><SC label="Size" value={house.squareMetres ? `${house.squareMetres}m²` : "—"} />
+        <SC label="Asking" value={f(house.askingPrice)} /><SC label="Current Bid" value={f(house.currentBid)} /><SC label="Beds/Baths" value={`${house.bedrooms || "?"} / ${house.bathrooms || "?"}`} /><SC label="BER" value={house.ber ? `${house.ber}${house.berEpi ? ` (${house.berEpi})` : ""}` : "—"} /><SC label="Size" value={house.squareMetres ? `${house.squareMetres}m²` : "—"} />
+      </div>
+      {/* Extra stats row */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {house.pricePerSqm && <SC label="€/m²" value={`€${house.pricePerSqm.toLocaleString()}`} />}
+        {house.daysOnMarket != null && <SC label="Days on Market" value={String(house.daysOnMarket)} />}
+        {house.agentName && <SC label="Agent" value={`${house.agentName}${house.agentBranch ? ` · ${house.agentBranch}` : ""}`} />}
+        {house.agentPhone && <SC label="Agent Phone" value={house.agentPhone} />}
       </div>
 
       {/* Affordability Bar (Gap 2) */}

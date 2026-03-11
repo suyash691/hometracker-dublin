@@ -22,19 +22,30 @@ export async function POST(req: NextRequest) {
         propertyType: listing.propertyType,
         ber: listing.ber,
         squareMetres: listing.squareMetres,
+        lat: listing.lat,
+        lng: listing.lng,
+        berEpi: listing.berEpi,
+        pricePerSqm: listing.pricePerSqm,
+        publishDate: listing.publishDate,
+        daysOnMarket: listing.publishDate ? Math.floor((Date.now() - listing.publishDate.getTime()) / 86400000) : undefined,
+        agentName: listing.agentName,
+        agentBranch: listing.agentBranch,
+        agentPhone: listing.agentPhone,
         status: "wishlist",
         addedBy: user || undefined,
       },
     });
 
-    // Create media records for downloaded images
+    // Create media records for photos
     if (listing.images.length > 0) {
       await prisma.media.createMany({
-        data: listing.images.map((filePath, i) => ({
-          houseId: house.id,
-          type: i === 0 ? "photo" : "photo",
-          filePath,
-        })),
+        data: listing.images.map((filePath) => ({ houseId: house.id, type: "photo", filePath })),
+      });
+    }
+    // Create media records for floorplans
+    if (listing.floorplanImages.length > 0) {
+      await prisma.media.createMany({
+        data: listing.floorplanImages.map((filePath) => ({ houseId: house.id, type: "floorplan", filePath })),
       });
     }
 

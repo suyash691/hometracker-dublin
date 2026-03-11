@@ -8,6 +8,10 @@ export interface ScrapedListing {
   address: string; askingPrice?: number; bedrooms?: number; bathrooms?: number;
   propertyType?: string; ber?: string; squareMetres?: number; neighbourhood?: string;
   eircode?: string; listingUrl: string; images: string[];
+  // New fields from Daft API
+  lat?: number; lng?: number; berEpi?: string; pricePerSqm?: number;
+  publishDate?: Date; agentName?: string; agentBranch?: string; agentPhone?: string;
+  floorplanImages: string[];
 }
 
 // Extract listing ID from Daft URL: /for-sale/.../6515784 → 6515784
@@ -66,10 +70,26 @@ async function fetchViaApi(listingId: string, originalUrl: string): Promise<Scra
   const priceMatch = priceStr.match(/[\d,]+/);
   const price = priceMatch ? parseInt(priceMatch[0].replace(/,/g, ""), 10) : undefined;
 
-  const imageUrls = (listing.media?.images || [])
-    .map((img: Record<string, string>) => img.size720x480 || img.size600x600 || img.size400x300 || img.url || "")
-    .filter((u: string) => u.startsWith("http"))
-    .slice(0, 10);
+  // Separate photos from floorplans
+  const allImages = listing.media?.images || [];
+  const photos = allImages.filter((img: Record<string, boolean>) => !img.floorPlan);
+  const floorplans = allImages.filter((img: Record<string, boolean>) => img.floorPlan);
+
+  const photoUrls = photos.map((img: Record<string, string>) => img.size720x480 || img.size600x600 || "").filter(Boolean).slice(0, 10);
+  const floorplanUrls = floorplans.map((img: Record<string, string>) => img.size720x480 || img.size600x600 || "").filter(Boolean).slice(0, 5);
+
+  // Extract coordinates
+  const coords = listing.point?.coordinates;
+  const lng = coords?.[0];
+  const lat = coords?.[1];
+
+  // Calculate days on market
+  const pubDate = listing.publishDate ? new Date(listing.publishDate) : undefined;
+  const daysOnMarket = pubDate ? Math.floor((Date.now() - pubDate.getTime()) / 86400000) : undefined;
+
+  // Extract price per sqm
+  const ppsqm = listing.pricePerSqM?.match(/[\d,]+/);
+  const pricePerSqm = ppsqm ? parseInt(ppsqm[0].replace(/,/g, ""), 10) : undefined;
 
   return {
     address: (listing.title || "").replace(/,?\s*Dublin\s*\d*,?\s*Ireland/i, "").trim(),
@@ -82,7 +102,16 @@ async function fetchViaApi(listingId: string, originalUrl: string): Promise<Scra
     neighbourhood: inferNeighbourhood(listing.title || ""),
     eircode: (listing.title || "").match(/([A-Z]\d{2}\s?[A-Z0-9]{4})/i)?.[1],
     listingUrl: originalUrl,
-    images: await downloadImages(imageUrls),
+    images: await downloadImages(photoUrls),
+    floorplanImages: await downloadImages(floorplanUrls),
+    // New fields
+    lat, lng,
+    berEpi: listing.ber?.epi,
+    pricePerSqm,
+    publishDate: pubDate,
+    agentName: listing.seller?.name,
+    agentBranch: listing.seller?.branch,
+    agentPhone: listing.seller?.phone,
   };
 }
 
@@ -118,7 +147,7 @@ async function fetchViaHtml(url: string): Promise<ScrapedListing> {
           squareMetres: listing.floorArea?.value ? parseFloat(listing.floorArea.value) : undefined,
           neighbourhood: inferNeighbourhood(listing.title || ""),
           eircode: (listing.title || "").match(/([A-Z]\d{2}\s?[A-Z0-9]{4})/i)?.[1],
-          listingUrl: url, images: await downloadImages((listing.media?.images || []).map((i: Record<string, string>) => i.url || i.size720x480 || "").filter(Boolean).slice(0, 10)),
+          listingUrl: url, images: await downloadImages((listing.media?.images || []).map((i: Record<string, string>) => i.url || i.size720x480 || "").filter(Boolean).slice(0, 10)), floorplanImages: [],
         };
       }
     } catch { /* fall through to HTML parsing */ }
@@ -137,7 +166,7 @@ async function fetchViaHtml(url: string): Promise<ScrapedListing> {
     squareMetres: (() => { const m = ($('[data-testid="floor-area"]').text() || "").match(/([\d.]+)\s*m/); return m ? parseFloat(m[1]) : undefined; })(),
     neighbourhood: inferNeighbourhood(address),
     eircode: address.match(/([A-Z]\d{2}\s?[A-Z0-9]{4})/i)?.[1],
-    listingUrl: url, images: [],
+    listingUrl: url, images: [], floorplanImages: [],
   };
 }
 

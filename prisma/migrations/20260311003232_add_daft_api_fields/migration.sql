@@ -1,0 +1,10 @@
+-- AlterTable
+ALTER TABLE "House" ADD COLUMN "agentBranch" TEXT;
+ALTER TABLE "House" ADD COLUMN "agentName" TEXT;
+ALTER TABLE "House" ADD COLUMN "agentPhone" TEXT;
+ALTER TABLE "House" ADD COLUMN "berEpi" TEXT;
+ALTER TABLE "House" ADD COLUMN "daysOnMarket" INTEGER;
+ALTER TABLE "House" ADD COLUMN "lat" REAL;
+ALTER TABLE "House" ADD COLUMN "lng" REAL;
+ALTER TABLE "House" ADD COLUMN "pricePerSqm" REAL;
+ALTER TABLE "House" ADD COLUMN "publishDate" DATETIME;

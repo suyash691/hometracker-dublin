@@ -9,7 +9,10 @@ export async function refreshNeighbourhood(houseId: string) {
   if (!house) throw new Error("House not found");
 
   const geo = getGeoProvider();
-  const houseLoc = await geo.geocode(house.address);
+  // Use stored coordinates if available (from Daft API), otherwise geocode
+  const houseLoc = (house.lat && house.lng)
+    ? { lat: house.lat, lng: house.lng }
+    : await geo.geocode(house.address);
 
   // --- Amenities (walking only, with walkability threshold) ---
   const amenities = await prisma.preferredAmenity.findMany({ where: { enabled: true } });

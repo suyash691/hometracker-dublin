@@ -46,3 +46,16 @@ When status → `sale_agreed`, auto-creates:
 - ConveyancingTracker with 18 milestones
 - TotalCostEstimate with stamp duty
 - 4 action items (solicitor, survey, mortgage, insurance)
+
+## Daft.ie API Fields (from gateway.daft.ie)
+
+The import scraper uses Daft's internal API which returns rich data:
+
+| Field | Source | Stored As | Used By |
+|-------|--------|-----------|---------|
+| `point.coordinates` | API | House.lat, House.lng | Neighbourhood (skips geocoding) |
+| `ber.epi` | API | House.berEpi | BER cost impact display |
+| `pricePerSqM` | API | House.pricePerSqm | House detail stats, PPR comparison |
+| `publishDate` | API | House.publishDate, House.daysOnMarket | Days on market indicator |
+| `seller.name/branch/phone` | API | House.agentName/agentBranch/agentPhone | Agent info display, CommLog pre-fill |
+| `media.images[].floorPlan` | API | Media.type = "floorplan" | Separate floorplans from photos |

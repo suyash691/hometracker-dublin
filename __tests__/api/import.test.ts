@@ -7,7 +7,7 @@ jest.mock("@/lib/scraper", () => ({
   scrapeDaftListing: jest.fn().mockResolvedValue({
     address: "42 Phibsborough Rd", askingPrice: 425000, bedrooms: 3, bathrooms: 1,
     propertyType: "terraced", ber: "C2", squareMetres: 95, neighbourhood: "Phibsborough",
-    eircode: "D07", listingUrl: "https://daft.ie/123", images: ["/data/media/img1.jpg"],
+    eircode: "D07", listingUrl: "https://daft.ie/123", images: ["/data/media/img1.jpg"], floorplanImages: [],
   }),
 }));
 jest.mock("@/lib/activity", () => ({ logActivity: jest.fn() }));
@@ -46,7 +46,7 @@ describe("Import API", () => {
 
   it("auto-creates apartment details for apartments", async () => {
     const { scrapeDaftListing } = require("@/lib/scraper");
-    scrapeDaftListing.mockResolvedValue({ address: "Apt 4", propertyType: "apartment", listingUrl: "https://daft.ie/456", images: [] });
+    scrapeDaftListing.mockResolvedValue({ address: "Apt 4", propertyType: "apartment", listingUrl: "https://daft.ie/456", images: [], floorplanImages: [] });
     (prisma.house.create as jest.Mock).mockResolvedValue({ id: "h2", propertyType: "apartment" });
     (prisma.apartmentDetails.create as jest.Mock).mockResolvedValue({});
     (prisma.defectiveBlocksAssessment.create as jest.Mock).mockResolvedValue({});

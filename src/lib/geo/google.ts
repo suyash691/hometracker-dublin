@@ -13,13 +13,15 @@ export class GoogleMapsProvider implements GeoProvider {
   }
 
   async nearbySearch(center: LatLng, query: string, radiusMetres: number): Promise<Place[]> {
-    const isType = !query.includes("=");
-    const params = isType ? `type=${query}` : `keyword=${query.split("=")[1]}`;
-    const res = await fetch(`${this.base}/place/nearbysearch/json?location=${center.lat},${center.lng}&radius=${radiusMetres}&${params}&key=${this.apiKey}`);
+    // Use textsearch for everything — much more accurate than nearbysearch for both named stores and activity types
+    const searchTerm = query.includes("=") ? query.split("=")[1] : query;
+    const res = await fetch(`${this.base}/place/textsearch/json?query=${encodeURIComponent(searchTerm)}&location=${center.lat},${center.lng}&radius=${radiusMetres}&key=${this.apiKey}`);
     const data = await res.json();
     return (data.results || []).slice(0, 5).map((r: Record<string, unknown>) => ({
-      name: r.name as string, lat: (r.geometry as Record<string, Record<string, number>>).location.lat,
-      lng: (r.geometry as Record<string, Record<string, number>>).location.lng, address: r.vicinity as string | undefined,
+      name: r.name as string,
+      lat: (r.geometry as Record<string, Record<string, number>>).location.lat,
+      lng: (r.geometry as Record<string, Record<string, number>>).location.lng,
+      address: r.formatted_address as string | undefined,
     }));
   }
 

@@ -23,7 +23,7 @@ export default function HousesPage() {
       ber: form.ber || undefined,
       neighbourhood: form.neighbourhood || undefined,
       listingUrl: form.listingUrl || undefined,
-      viewingDate: form.viewingDate || undefined,
+      viewingDate: form.viewingDate ? new Date(form.viewingDate).toISOString() : undefined,
       status: form.status,
     });
     setForm({ address: "", askingPrice: "", bedrooms: "", bathrooms: "", propertyType: "house", ber: "", neighbourhood: "", listingUrl: "", viewingDate: "", status: "wishlist" });

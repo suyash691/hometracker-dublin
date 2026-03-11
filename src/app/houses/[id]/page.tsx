@@ -118,7 +118,7 @@ export default function HouseDetail({ params }: { params: Promise<{ id: string }
             {house.notes && <div className="bg-white rounded-lg p-4 border"><h3 className="font-semibold text-sm mb-2">Notes</h3><p className="text-sm text-gray-700 whitespace-pre-wrap">{house.notes}</p></div>}
             <div className="flex items-center gap-3 text-sm">
               <label className="text-gray-500">Viewing date:</label>
-              <input type="datetime-local" value={house.viewingDate ? new Date(house.viewingDate).toISOString().slice(0, 16) : ""} onChange={async (e) => { await api.houses.update(id, { viewingDate: e.target.value || undefined }); load(); }} className="border rounded px-2 py-1 text-sm" />
+              <input type="datetime-local" value={house.viewingDate ? new Date(house.viewingDate).toISOString().slice(0, 16) : ""} onChange={async (e) => { const v = e.target.value; await api.houses.update(id, { viewingDate: v ? new Date(v).toISOString() : null }); load(); }} className="border rounded px-2 py-1 text-sm" />
               {house.viewingDate && <a href={`/api/houses/${id}/calendar`} className="text-emerald-600 hover:underline">📅 Add to Calendar</a>}
             </div>
             <button onClick={() => setEditNotes(true)} className="text-sm text-emerald-600 hover:underline">Edit notes / pros / cons</button>

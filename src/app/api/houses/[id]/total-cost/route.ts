@@ -49,7 +49,7 @@ export async function PUT(req: NextRequest, ctx: Ctx) {
   const tc = await prisma.totalCostEstimate.upsert({
     where: { houseId: id },
     update: body,
-    create: { houseId: id, ...body },
+    create: { houseId: id, purchasePrice: 0, deposit: 0, stampDuty: 0, ...body },
   });
   return NextResponse.json(tc);
 }

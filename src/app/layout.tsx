@@ -9,7 +9,11 @@ const geist = Geist({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "HomeTracker — Dublin House Buying Companion",
   description: "Track your Dublin house hunt",
-  viewport: "width=device-width, initial-scale=1",
+};
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
 };
 
 const NAV = [

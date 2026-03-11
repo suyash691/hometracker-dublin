@@ -15,7 +15,14 @@ export async function refreshNeighbourhood(houseId: string, injectedGeo?: GeoPro
     : await geo.geocode(house.address);
 
   // --- Amenities (walking only, with walkability threshold) ---
-  const amenities = await prisma.preferredAmenity.findMany({ where: { enabled: true } });
+  // Auto-seed amenities if none exist
+  let amenities = await prisma.preferredAmenity.findMany({ where: { enabled: true } });
+  if (amenities.length === 0) {
+    const { DEFAULT_AMENITIES } = await import("./default-amenities");
+    await prisma.preferredAmenity.createMany({ data: DEFAULT_AMENITIES });
+    amenities = await prisma.preferredAmenity.findMany({ where: { enabled: true } });
+    console.log(`[neighbourhood] Auto-seeded ${amenities.length} amenities`);
+  }
   await prisma.nearbyAmenity.deleteMany({ where: { houseId } });
 
   for (const am of amenities) {

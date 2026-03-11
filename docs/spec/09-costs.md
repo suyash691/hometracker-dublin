@@ -30,6 +30,42 @@ When a new bid is placed, the total cost estimate is **auto-recalculated** if on
 
 purchasePrice (from bid or asking), deposit (10%), stampDuty (auto), legalFees (€2.5k), landRegistryFees (€700), surveyFee (€500), valuationFee (€185), mortgageProtection, homeInsurance, movingCosts (€800), otherCosts. Computed at read time: totalUpfront, cashNeededAtClosing.
 
+## True Cost of Ownership
+
+The costs tab shows three levels of cost:
+
+| Level | What's Included | Purpose |
+|-------|----------------|---------|
+| **Cash at Closing** | deposit + stamp duty + legal + registry + survey + valuation | "How much cash do I need on closing day?" |
+| **Total Purchase Cost** | cash at closing + mortgage protection + home insurance + moving | "What's the full first-year cost?" |
+| **True Cost (incl. renovation)** | total purchase cost + renovation estimate (low–high range) | "What will this house actually cost me all-in?" |
+
+The renovation estimate is pulled from the house's `RenovationEstimate` records (sum of `estimatedCostLow` and `estimatedCostHigh`). If AI estimates have been generated, they're included. If SEAI grants apply (from BER impact), the net-after-grant figure is shown.
+
+```
+Purchase Price                    €450,000
+────────────────────────────────────────────
+Deposit (10%)                      €45,000
+Stamp Duty                          €4,500
+Legal Fees                          €2,500
+Land Registry                         €700
+Survey                                €500
+Valuation                             €185
+────────────────────────────────────────────
+Cash Needed at Closing             €53,385
+
+Mortgage Protection (annual)          €600
+Home Insurance (annual)               €450
+Moving Costs                          €800
+────────────────────────────────────────────
+Total Purchase Cost                €55,235
+
+Renovation Estimate          €25,000–€40,000
+SEAI Grants Available              -€25,000
+────────────────────────────────────────────
+True All-In Cost         €55,235–€70,235
+```
+
 ## Funding Stack
 
 Stacked bar: Mortgage (90%) + Deposit (10%) + HTB refund. Per-house on schemes page.

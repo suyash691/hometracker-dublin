@@ -22,18 +22,18 @@ describe("OsmProvider.route — multi-modal", () => {
     expect(r.durationMinutes).toBe(25);
   });
 
-  it("cycling uses OSRM bicycle profile", async () => {
+  it("cycling uses foot distance with cycling speed", async () => {
     mockFetch.mockResolvedValue({ ok: true, json: () => Promise.resolve({ routes: [{ distance: 2200, duration: 600 }] }) });
     const r = await osm.route(from, to, "cycling");
-    expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining("/bicycle/"));
+    expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining("/foot/"));
     expect(r.distanceMetres).toBe(2200);
   });
 
-  it("driving uses OSRM car profile", async () => {
+  it("driving uses foot distance with driving speed", async () => {
     mockFetch.mockResolvedValue({ ok: true, json: () => Promise.resolve({ routes: [{ distance: 3000, duration: 480 }] }) });
     const r = await osm.route(from, to, "driving");
-    expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining("/car/"));
-    expect(r.distanceMetres).toBe(3000);
+    expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining("/foot/"));
+    expect(r.distanceMetres).toBe(3300);
   });
 
   it("transit returns estimate with summary", async () => {

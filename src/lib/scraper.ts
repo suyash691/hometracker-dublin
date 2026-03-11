@@ -50,13 +50,14 @@ async function fetchViaApi(listingId: string, originalUrl: string): Promise<Scra
     },
     body: JSON.stringify({
       section: "residential-for-sale",
-      filters: [{ name: "adId", values: [listingId] }],
+      filters: [{ name: "id", values: [listingId] }],
       paging: { from: "0", pagesize: "1" },
     }),
   });
 
   if (!res.ok) throw new Error(`Daft gateway API returned ${res.status}`);
   const data = await res.json();
+  console.log(`[scraper] API response keys: ${JSON.stringify(Object.keys(data))}, listings count: ${data.listings?.length || 0}, paging: ${JSON.stringify(data.paging)}`);
   const listings = data.listings || [];
   if (listings.length === 0) throw new Error("Listing not found in API response");
 

@@ -90,13 +90,14 @@ export default function HouseDetail({ params }: { params: Promise<{ id: string }
       </div>
 
       {/* Affordability Bar (Gap 2) */}
-      {maxBudget && house.askingPrice && (() => {
-        const pct = Math.min((house.askingPrice / maxBudget) * 100, 100);
-        const within = house.askingPrice <= maxBudget;
+      {maxBudget && (house.currentBid || house.askingPrice) && (() => {
+        const price = house.currentBid || house.askingPrice!;
+        const pct = Math.min((price / maxBudget) * 100, 100);
+        const within = price <= maxBudget;
         return (
           <div className="bg-white rounded-lg p-3 border">
             <div className="flex justify-between text-sm mb-1">
-              <span>{f(house.askingPrice)} / {f(maxBudget)} budget</span>
+              <span>{f(price)} / {f(maxBudget)} budget{house.currentBid && house.currentBid !== house.askingPrice ? " (current bid)" : ""}</span>
               <span className={within ? "text-emerald-600" : "text-red-600"}>{within ? "✓ Within your borrowing limits" : "✗ Exceeds your borrowing limits"}</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2.5">

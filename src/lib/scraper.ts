@@ -12,13 +12,20 @@ export interface ScrapedListing {
   publishDate?: Date; agentName?: string; agentBranch?: string; agentPhone?: string;
 }
 
+// Strip query params, fragments, and trailing slashes from Daft URL
+function sanitizeUrl(url: string): string {
+  try { const u = new URL(url); return u.origin + u.pathname.replace(/\/+$/, ""); } catch { return url; }
+}
+
 // Extract listing ID from Daft URL: /for-sale/.../6515784 → 6515784
 function extractListingId(url: string): string | null {
-  const match = url.match(/\/(\d{5,})$/);
+  const clean = sanitizeUrl(url);
+  const match = clean.match(/\/(\d{5,})$/);
   return match ? match[1] : null;
 }
 
-export async function scrapeDaftListing(url: string): Promise<ScrapedListing> {
+export async function scrapeDaftListing(rawUrl: string): Promise<ScrapedListing> {
+  const url = sanitizeUrl(rawUrl);
   const listingId = extractListingId(url);
 
   // Try Daft's internal API first (bypasses Cloudflare)

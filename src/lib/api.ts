@@ -45,6 +45,7 @@ export const api = {
     list: (hid: string) => request<Estimate[]>(`/houses/${hid}/estimates`),
     create: (hid: string, d: Partial<Estimate>) => request<Estimate>(`/houses/${hid}/estimates`, { method: "POST", body: JSON.stringify(d) }),
     generate: (hid: string) => request<Estimate[]>(`/houses/${hid}/estimates/generate`, { method: "POST" }),
+    importJson: (hid: string, data: Record<string, unknown>[]) => request<Estimate[]>(`/houses/${hid}/estimates/import`, { method: "POST", body: JSON.stringify(data) }),
   },
   media: {
     list: (hid: string) => request<Media[]>(`/houses/${hid}/media`),

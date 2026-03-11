@@ -18,15 +18,27 @@ export class OsmProvider implements GeoProvider {
   async nearbySearch(center: LatLng, osmTag: string, radiusMetres: number): Promise<Place[]> {
     const [key, val] = osmTag.split("=");
     const filter = key === "name" ? `["name"~"${val}",i]` : `["${key}"="${val}"]`;
-    const query = `[out:json][timeout:10];(node${filter}(around:${radiusMetres},${center.lat},${center.lng});way${filter}(around:${radiusMetres},${center.lat},${center.lng}););out center 5;`;
-    const res = await fetch(this.overpass, { method: "POST", body: `data=${encodeURIComponent(query)}`, headers: { "Content-Type": "application/x-www-form-urlencoded", "User-Agent": UA } });
-    const data = await res.json();
-    return (data.elements || []).map((el: Record<string, unknown>) => {
-      const tags = (el.tags || {}) as Record<string, string>;
-      const lat = (el.lat || (el.center as Record<string, number>)?.lat) as number;
-      const lng = (el.lon || (el.center as Record<string, number>)?.lon) as number;
-      return { name: tags.name || val, lat, lng, address: tags["addr:street"] ? `${tags["addr:housenumber"] || ""} ${tags["addr:street"]}`.trim() : undefined };
-    }).filter((p: Place) => p.lat && p.lng);
+    // Use node-only for point features (stops, pharmacies), node+way for areas (parks, shops)
+    const areaTypes = ["leisure", "shop"];
+    const includeWay = areaTypes.some(t => key === t);
+    const elements = includeWay ? `node${filter}(around:${radiusMetres},${center.lat},${center.lng});way${filter}(around:${radiusMetres},${center.lat},${center.lng});` : `node${filter}(around:${radiusMetres},${center.lat},${center.lng});`;
+    const query = `[out:json][timeout:10];(${elements});out center 5;`;
+    try {
+      const res = await fetch(this.overpass, { method: "POST", body: `data=${encodeURIComponent(query)}`, headers: { "Content-Type": "application/x-www-form-urlencoded", "User-Agent": UA } });
+      if (!res.ok) { console.log(`[osm] Overpass ${res.status} for ${osmTag}`); return []; }
+      const text = await res.text();
+      if (text.startsWith("<")) { console.log(`[osm] Overpass returned XML for ${osmTag}`); return []; }
+      const data = JSON.parse(text);
+      return (data.elements || []).map((el: Record<string, unknown>) => {
+        const tags = (el.tags || {}) as Record<string, string>;
+        const lat = (el.lat || (el.center as Record<string, number>)?.lat) as number;
+        const lng = (el.lon || (el.center as Record<string, number>)?.lon) as number;
+        return { name: tags.name || val, lat, lng, address: tags["addr:street"] ? `${tags["addr:housenumber"] || ""} ${tags["addr:street"]}`.trim() : undefined };
+      }).filter((p: Place) => p.lat && p.lng);
+    } catch (err) {
+      console.log(`[osm] Overpass error for ${osmTag}:`, err instanceof Error ? err.message : err);
+      return [];
+    }
   }
 
   async route(from: LatLng, to: LatLng, mode: TransportMode): Promise<Route> {

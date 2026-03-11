@@ -28,7 +28,7 @@ export async function refreshNeighbourhood(houseId: string, injectedGeo?: GeoPro
       await prisma.nearbyAmenity.create({
         data: { houseId, amenityId: am.id, name: closest.name, distanceMetres: walk.distanceMetres, walkingMinutes: walk.durationMinutes, lat: closest.lat, lng: closest.lng, address: closest.address },
       });
-    } catch { /* skip */ }
+    } catch (err) { console.log(`[neighbourhood] Error:`, err instanceof Error ? err.message : err); }
     if (process.env.GEO_PROVIDER !== "google") await sleep(1100);
   }
 
@@ -50,7 +50,7 @@ export async function refreshNeighbourhood(houseId: string, injectedGeo?: GeoPro
         });
         if (process.env.GEO_PROVIDER !== "google") await sleep(1100);
       }
-    } catch { /* skip */ }
+    } catch (err) { console.log(`[neighbourhood] Error:`, err instanceof Error ? err.message : err); }
   }
 
   return prisma.house.findUnique({

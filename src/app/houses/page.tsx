@@ -26,7 +26,7 @@ export default function HousesPage() {
       viewingDate: form.viewingDate || undefined,
       status: form.status,
     });
-    setForm({ address: "", askingPrice: "", bedrooms: "", bathrooms: "", propertyType: "house", ber: "", neighbourhood: "", listingUrl: "", status: "wishlist" });
+    setForm({ address: "", askingPrice: "", bedrooms: "", bathrooms: "", propertyType: "house", ber: "", neighbourhood: "", listingUrl: "", viewingDate: "", status: "wishlist" });
     setShowForm(false);
     load();
   };

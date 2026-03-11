@@ -34,44 +34,51 @@ export async function scrapeDaftListing(url: string): Promise<ScrapedListing> {
 }
 
 async function fetchViaApi(listingId: string, originalUrl: string): Promise<ScrapedListing> {
-  // Daft.ie search API — POST to get listing data by ID
-  const res = await fetch("https://gateway.daft.ie/old/v1/listings/" + listingId, {
+  // Step 1: Hit the Daft.ie homepage first to get Cloudflare cookies
+  const session = await fetch("https://www.daft.ie/", {
     headers: {
       "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-      "Accept": "application/json",
-      "brand": "daft",
-      "platform": "web",
+      "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
     },
+    redirect: "follow",
+  });
+  // Extract any cookies from the response
+  const cookies = session.headers.get("set-cookie") || "";
+
+  // Step 2: Fetch the listing page with the cookies
+  const res = await fetch(originalUrl, {
+    headers: {
+      "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+      "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+      "Accept-Language": "en-IE,en;q=0.9",
+      "Referer": "https://www.daft.ie/",
+      "Cookie": cookies,
+      "Sec-Fetch-Dest": "document", "Sec-Fetch-Mode": "navigate", "Sec-Fetch-Site": "same-origin",
+    },
+    redirect: "follow",
   });
 
-  if (!res.ok) throw new Error(`Daft API returned ${res.status}`);
-  const data = await res.json();
-  const listing = data.listing || data;
+  if (!res.ok) throw new Error(`Daft fetch returned ${res.status}`);
 
-  const address = listing.title || listing.displayAddress || "";
-  const price = listing.price ? parseInt(String(listing.price).replace(/[^0-9]/g, ""), 10) : undefined;
-  const beds = listing.numBedrooms || listing.bedrooms;
-  const baths = listing.numBathrooms || listing.bathrooms;
-  const ber = listing.ber?.rating;
-  const sqm = listing.floorArea?.value ? parseFloat(listing.floorArea.value) : undefined;
-  const propertyType = inferPropertyType(listing.propertyType || listing.category || "");
+  const html = await res.text();
+  const $ = cheerio.load(html);
+  const nextData = $('script#__NEXT_DATA__').text();
+  if (!nextData) throw new Error("No __NEXT_DATA__ found");
 
-  // Download images
-  const imageUrls = (listing.media?.images || listing.images || [])
-    .map((img: Record<string, unknown>) => (img.url || img.size720x480 || img.original || "") as string)
-    .filter((u: string) => u.startsWith("http"))
-    .slice(0, 10);
-  const images = await downloadImages(imageUrls);
+  const json = JSON.parse(nextData);
+  const listing = json.props?.pageProps?.listing;
+  if (!listing) throw new Error("No listing data in __NEXT_DATA__");
 
   return {
-    address: address.replace(/,?\s*Dublin\s*\d*,?\s*Ireland/i, "").trim(),
-    askingPrice: price && price > 0 ? price : undefined,
-    bedrooms: beds ? Number(beds) : undefined,
-    bathrooms: baths ? Number(baths) : undefined,
-    propertyType, ber, squareMetres: sqm,
-    neighbourhood: inferNeighbourhood(address),
-    eircode: address.match(/([A-Z]\d{2}\s?[A-Z0-9]{4})/i)?.[1],
-    listingUrl: originalUrl, images,
+    address: (listing.title || "").replace(/,?\s*Dublin\s*\d*,?\s*Ireland/i, "").trim(),
+    askingPrice: listing.price ? parseInt(String(listing.price).replace(/[^0-9]/g, ""), 10) : undefined,
+    bedrooms: listing.numBedrooms, bathrooms: listing.numBathrooms,
+    ber: listing.ber?.rating, propertyType: inferPropertyType(listing.propertyType || listing.category || ""),
+    squareMetres: listing.floorArea?.value ? parseFloat(listing.floorArea.value) : undefined,
+    neighbourhood: inferNeighbourhood(listing.title || ""),
+    eircode: (listing.title || "").match(/([A-Z]\d{2}\s?[A-Z0-9]{4})/i)?.[1],
+    listingUrl: originalUrl,
+    images: await downloadImages((listing.media?.images || []).map((i: Record<string, string>) => i.size720x480 || i.url || "").filter(Boolean).slice(0, 10)),
   };
 }
 
